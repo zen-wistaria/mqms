@@ -119,7 +119,7 @@ export function DailyUsageChart({
 					tickLine={false}
 					width={70}
 				/>
-				<Tooltip<number, string>
+				<Tooltip
 					contentStyle={{
 						borderRadius: "8px",
 						border: "1px solid var(--border)",
@@ -127,11 +127,14 @@ export function DailyUsageChart({
 						color: "oklch(0.95 0.01 265)",
 						fontSize: 12,
 					}}
-					formatter={(value, name) => [
-						formatBytes(value),
+					formatter={(
+						value: number | string | readonly (number | string)[] | undefined,
+						name: string | number | undefined,
+					) => [
+						formatBytes(Number(value) || 0),
 						name === "uploadBytes" ? "Upload" : "Download",
 					]}
-					labelFormatter={(label) => `Day ${label}`}
+					labelFormatter={(label: React.ReactNode) => `Day ${label}`}
 				/>
 				<Area
 					type="monotone"

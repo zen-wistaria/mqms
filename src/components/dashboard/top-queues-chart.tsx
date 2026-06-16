@@ -94,7 +94,7 @@ export function TopQueuesChart({ topQueues, isLoading }: TopQueuesChartProps) {
 								axisLine={false}
 								tickLine={false}
 							/>
-							<Tooltip<number, string>
+							<Tooltip
 								cursor={{ fill: "var(--muted)" }}
 								contentStyle={{
 									borderRadius: "8px",
@@ -104,8 +104,10 @@ export function TopQueuesChart({ topQueues, isLoading }: TopQueuesChartProps) {
 									color: "oklch(0.95 0.01 265)",
 									fontSize: 12,
 								}}
-								formatter={(value) => [formatBytes(value), "Total"]}
-								labelFormatter={(label) => `Queue: ${label}`}
+								formatter={(
+									value: number | string | readonly (number | string)[] | undefined,
+								) => [formatBytes(Number(value) || 0), "Total"]}
+								labelFormatter={(label: React.ReactNode) => `Queue: ${label}`}
 							/>
 							<Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24} />
 						</BarChart>
