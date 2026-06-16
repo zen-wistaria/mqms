@@ -3,7 +3,6 @@
 import {
 	Bar,
 	BarChart,
-	Cell,
 	ResponsiveContainer,
 	Tooltip,
 	XAxis,
@@ -53,12 +52,13 @@ export function TopQueuesChart({ topQueues, isLoading }: TopQueuesChartProps) {
 		);
 	}
 
-	const data = topQueues.map((q) => ({
-		name: q.name.length > 15 ? q.name.substring(0, 15) + "..." : q.name,
+	const data = topQueues.map((q, index) => ({
+		name: q.name.length > 15 ? `${q.name.substring(0, 15)}...` : q.name,
 		fullName: q.name,
 		total: q.totalBytes,
 		upload: q.uploadBytes,
 		download: q.downloadBytes,
+		fill: COLORS[index % COLORS.length],
 	}));
 
 	return (
@@ -94,7 +94,7 @@ export function TopQueuesChart({ topQueues, isLoading }: TopQueuesChartProps) {
 								axisLine={false}
 								tickLine={false}
 							/>
-							<Tooltip
+							<Tooltip<number, string>
 								cursor={{ fill: "var(--muted)" }}
 								contentStyle={{
 									borderRadius: "8px",
@@ -104,19 +104,10 @@ export function TopQueuesChart({ topQueues, isLoading }: TopQueuesChartProps) {
 									color: "oklch(0.95 0.01 265)",
 									fontSize: 12,
 								}}
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								formatter={(value: any) => [
-									formatBytes(value as number),
-									"Total",
-								]}
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								labelFormatter={(label: any) => `Queue: ${label}`}
+								formatter={(value) => [formatBytes(value), "Total"]}
+								labelFormatter={(label) => `Queue: ${label}`}
 							/>
-							<Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24}>
-								{data.map((_, index) => (
-									<Cell key={index} fill={COLORS[index % COLORS.length]} />
-								))}
-							</Bar>
+							<Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24} />
 						</BarChart>
 					</ResponsiveContainer>
 				)}

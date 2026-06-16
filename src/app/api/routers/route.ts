@@ -21,7 +21,6 @@ export async function GET() {
 		});
 
 		// Remove password from response
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const safeRouters = routers.map(({ password: _, ...router }) => router);
 
 		return NextResponse.json(serializeBigInt(safeRouters));

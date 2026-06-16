@@ -119,7 +119,7 @@ export function DailyUsageChart({
 					tickLine={false}
 					width={70}
 				/>
-				<Tooltip
+				<Tooltip<number, string>
 					contentStyle={{
 						borderRadius: "8px",
 						border: "1px solid var(--border)",
@@ -127,13 +127,11 @@ export function DailyUsageChart({
 						color: "oklch(0.95 0.01 265)",
 						fontSize: 12,
 					}}
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					formatter={(value: any, name: any) => [
-						formatBytes(value as number),
+					formatter={(value, name) => [
+						formatBytes(value),
 						name === "uploadBytes" ? "Upload" : "Download",
 					]}
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					labelFormatter={(label: any) => `Day ${label}`}
+					labelFormatter={(label) => `Day ${label}`}
 				/>
 				<Area
 					type="monotone"

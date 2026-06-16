@@ -97,9 +97,8 @@ export default function SettingsPage() {
 						<div className="rounded-lg border p-4">
 							<p className="text-sm font-medium">Sync Interval</p>
 							<p className="text-2xl font-bold font-mono mt-1">
-								{Number(
-									process.env.NEXT_PUBLIC_SYNC_INTERVAL_MS || "300000",
-								) / 1000}
+								{Number(process.env.NEXT_PUBLIC_SYNC_INTERVAL_MS || "300000") /
+									1000}
 								s
 							</p>
 							<p className="text-xs text-muted-foreground mt-1">

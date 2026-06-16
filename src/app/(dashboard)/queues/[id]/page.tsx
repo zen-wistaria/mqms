@@ -149,9 +149,7 @@ export default function QueueDetailPage({
 			<div className="flex flex-col items-center justify-center h-64 gap-4">
 				<p className="text-muted-foreground">Queue not found</p>
 				<Button variant="outline" render={<Link href="/" />}>
-					<>
-						<ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-					</>
+					<ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
 				</Button>
 			</div>
 		);
@@ -170,7 +168,11 @@ export default function QueueDetailPage({
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-2">
-				<Button variant="ghost" size="icon" render={<Link href={`/routers/${queue.router.id}`} />}>
+				<Button
+					variant="ghost"
+					size="icon"
+					render={<Link href={`/routers/${queue.router.id}`} />}
+				>
 					<ArrowLeft className="h-4 w-4" />
 				</Button>
 				<div className="flex-1">
@@ -261,7 +263,10 @@ export default function QueueDetailPage({
 							<CardDescription>Upload and download per day</CardDescription>
 						</div>
 						<div className="flex gap-2">
-							<Select value={selectedMonth} onValueChange={(val) => setSelectedMonth(val || "")}>
+							<Select
+								value={selectedMonth}
+								onValueChange={(val) => setSelectedMonth(val || "")}
+							>
 								<SelectTrigger className="w-[130px]">
 									<SelectValue />
 								</SelectTrigger>
@@ -273,7 +278,10 @@ export default function QueueDetailPage({
 									))}
 								</SelectContent>
 							</Select>
-							<Select value={selectedYear} onValueChange={(val) => setSelectedYear(val || "")}>
+							<Select
+								value={selectedYear}
+								onValueChange={(val) => setSelectedYear(val || "")}
+							>
 								<SelectTrigger className="w-[100px]">
 									<SelectValue />
 								</SelectTrigger>
@@ -291,8 +299,8 @@ export default function QueueDetailPage({
 				<CardContent>
 					<DailyUsageChart
 						queueId={id}
-						year={parseInt(selectedYear)}
-						month={parseInt(selectedMonth)}
+						year={parseInt(selectedYear, 10)}
+						month={parseInt(selectedMonth, 10)}
 					/>
 				</CardContent>
 			</Card>

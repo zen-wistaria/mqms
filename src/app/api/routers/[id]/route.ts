@@ -33,7 +33,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 			return NextResponse.json({ error: "Router not found" }, { status: 404 });
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { password: _, ...safeRouter } = router;
 		return NextResponse.json(serializeBigInt(safeRouter));
 	} catch (error) {

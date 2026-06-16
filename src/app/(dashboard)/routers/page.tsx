@@ -171,7 +171,7 @@ export default function RoutersPage() {
 	const handleTestConnection = async (id: string) => {
 		setIsTesting(id);
 		try {
-			let res;
+			let res: Response;
 			if (id === "form") {
 				// Test from form (new router)
 				res = await fetch("/api/routers/new/test", {

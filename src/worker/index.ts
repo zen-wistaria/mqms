@@ -10,59 +10,59 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 
 async function runPollCycle() {
-  if (isShuttingDown) return;
-  try {
-    console.log(`[Worker] Starting poll cycle at ${new Date().toISOString()}`);
-    await pollAllRouters();
-    console.log(`[Worker] Poll cycle completed`);
-  } catch (error) {
-    console.error("[Worker] Poll cycle error:", error);
-  }
+	if (isShuttingDown) return;
+	try {
+		console.log(`[Worker] Starting poll cycle at ${new Date().toISOString()}`);
+		await pollAllRouters();
+		console.log(`[Worker] Poll cycle completed`);
+	} catch (error) {
+		console.error("[Worker] Poll cycle error:", error);
+	}
 }
 
 async function runSyncCycle() {
-  if (isShuttingDown) return;
-  try {
-    console.log(`[Worker] Starting sync cycle at ${new Date().toISOString()}`);
-    await syncAllRouters();
-    console.log(`[Worker] Sync cycle completed`);
-  } catch (error) {
-    console.error("[Worker] Sync cycle error:", error);
-  }
+	if (isShuttingDown) return;
+	try {
+		console.log(`[Worker] Starting sync cycle at ${new Date().toISOString()}`);
+		await syncAllRouters();
+		console.log(`[Worker] Sync cycle completed`);
+	} catch (error) {
+		console.error("[Worker] Sync cycle error:", error);
+	}
 }
 
 function shutdown() {
-  if (isShuttingDown) return;
-  isShuttingDown = true;
-  console.log("[Worker] Shutting down gracefully...");
+	if (isShuttingDown) return;
+	isShuttingDown = true;
+	console.log("[Worker] Shutting down gracefully...");
 
-  if (pollTimer) clearInterval(pollTimer);
-  if (syncTimer) clearInterval(syncTimer);
+	if (pollTimer) clearInterval(pollTimer);
+	if (syncTimer) clearInterval(syncTimer);
 
-  process.exit(0);
+	process.exit(0);
 }
 
 async function main() {
-  console.log("[Worker] MQMS Background Worker starting...");
-  console.log(`[Worker] Polling interval: ${POLLING_INTERVAL}ms`);
-  console.log(`[Worker] Sync interval: ${SYNC_INTERVAL}ms`);
+	console.log("[Worker] MQMS Background Worker starting...");
+	console.log(`[Worker] Polling interval: ${POLLING_INTERVAL}ms`);
+	console.log(`[Worker] Sync interval: ${SYNC_INTERVAL}ms`);
 
-  // Graceful shutdown handlers
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
+	// Graceful shutdown handlers
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
 
-  // Run initial cycles
-  await runPollCycle();
-  await runSyncCycle();
+	// Run initial cycles
+	await runPollCycle();
+	await runSyncCycle();
 
-  // Start interval loops
-  pollTimer = setInterval(runPollCycle, POLLING_INTERVAL);
-  syncTimer = setInterval(runSyncCycle, SYNC_INTERVAL);
+	// Start interval loops
+	pollTimer = setInterval(runPollCycle, POLLING_INTERVAL);
+	syncTimer = setInterval(runSyncCycle, SYNC_INTERVAL);
 
-  console.log("[Worker] Background worker is running. Press Ctrl+C to stop.");
+	console.log("[Worker] Background worker is running. Press Ctrl+C to stop.");
 }
 
 main().catch((error) => {
-  console.error("[Worker] Fatal error:", error);
-  process.exit(1);
+	console.error("[Worker] Fatal error:", error);
+	process.exit(1);
 });
