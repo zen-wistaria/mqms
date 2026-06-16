@@ -8,10 +8,9 @@
 		"start": "next start",
 		"lint": "biome check .",
 		"format": "biome check --write .",
-		"worker": "tsx src/worker/index.ts",
-		"db:migrate": "bunx prisma migrate dev",
-		"db:studio": "bunx prisma studio",
-		"db:generate": "bunx prisma generate"
+		"worker": "bun worker.js",
+		"db:migrate": "bunx prisma migrate deploy",
+		"db:studio": "bunx prisma studio"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.5.0",
