@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - db_data:/app/prisma
+    environment:
+      - DATABASE_URL=file:./prod.db
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=http://localhost:3000
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    depends_on:
+      - migrate
+    restart: unless-stopped
+
+  migrate:
+    build: .
+    command: ["npx", "prisma", "migrate", "deploy"]
+    volumes:
+      - db_data:/app/prisma
+    environment:
+      - DATABASE_URL=file:./prod.db
+
+  worker:
+    build: .
+    command: ["npx", "tsx", "src/worker/index.ts"]
+    volumes:
+      - db_data:/app/prisma
+    environment:
+      - DATABASE_URL=file:./prod.db
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - POLLING_INTERVAL_MS=${POLLING_INTERVAL_MS:-60000}
+      - SYNC_INTERVAL_MS=${SYNC_INTERVAL_MS:-300000}
+    depends_on:
+      - migrate
+    restart: unless-stopped
+
+volumes:
+  db_data:

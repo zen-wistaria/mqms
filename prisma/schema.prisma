@@ -1,0 +1,141 @@
+generator client {
+  provider        = "prisma-client-js"
+  engineType      = "library"
+  previewFeatures = ["relationJoins"]
+  binaryTargets   = ["linux-musl", "native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================
+// better-auth models
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("verifications")
+}
+
+// ============================================
+// Application models
+// ============================================
+
+model Router {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  ipAddress    String
+  port         Int       @default(443)
+  useSSL       Boolean   @default(true)
+  username     String
+  password     String    // Encrypted AES-256-GCM
+  isActive     Boolean   @default(true)
+  lastPollAt   DateTime?
+  status       String    @default("unknown") // online, offline, error
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  queues Queue[]
+
+  @@map("routers")
+}
+
+model Queue {
+  id         String   @id @default(cuid())
+  routerId   String
+  name       String
+  target     String
+  maxLimit   String? // e.g. "10M/20M"
+  isDeleted  Boolean  @default(false)
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  router    Router         @relation(fields: [routerId], references: [id], onDelete: Cascade)
+  histories QueueHistory[]
+
+  @@unique([routerId, name])
+  @@index([routerId])
+  @@index([isDeleted])
+  @@map("queues")
+}
+
+model QueueHistory {
+  id            String   @id @default(cuid())
+  queueId       String
+  routerId      String
+  uploadBytes   BigInt
+  downloadBytes BigInt
+  totalBytes    BigInt
+  rateUpload    String?
+  rateDownload  String?
+  packetRate    String?
+  timestamp     DateTime @default(now())
+
+  queue Queue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  @@index([timestamp])
+  @@index([queueId, timestamp])
+  @@map("queue_histories")
+}
