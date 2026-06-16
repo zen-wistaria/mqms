@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const geistSans = Geist({
+const inter = Inter({
 	variable: "--font-sans",
 	subsets: ["latin"],
 });
@@ -26,10 +27,9 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" className="dark">
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
+		<html lang="en" className={`dark ${inter.variable} ${geistMono.variable}`}>
+			<body className="antialiased font-sans">
+				<NextTopLoader color="#8b5cf6" showSpinner={false} />
 				<TooltipProvider>
 					{children}
 					<Toaster richColors position="top-right" />
