@@ -9,8 +9,10 @@ export async function GET(request: NextRequest) {
 		const routerId = searchParams.get("routerId");
 		const showDeleted = searchParams.get("showDeleted") === "true";
 
+		const filter = searchParams.get("filter") || "total";
+
 		const where: Record<string, unknown> = {};
-		if (routerId) where.routerId = routerId;
+		if (routerId && routerId !== "all") where.routerId = routerId;
 		if (!showDeleted) where.isDeleted = false;
 
 		const queues = await prisma.queue.findMany({
@@ -20,23 +22,100 @@ export async function GET(request: NextRequest) {
 				router: {
 					select: { id: true, name: true, status: true },
 				},
-				histories: {
+			},
+		});
+
+		let startDate: Date | undefined;
+		let endDate: Date | undefined;
+
+		if (filter !== "total") {
+			const [year, month] = filter.split("-").map(Number);
+			startDate = new Date(year, month - 1, 1);
+			endDate = new Date(year, month, 1);
+		}
+
+		const result = [];
+
+		for (const queue of queues) {
+			let qUpload = BigInt(0);
+			let qDownload = BigInt(0);
+			let qTotal = BigInt(0);
+			let rateUpload: string | null = null;
+			let rateDownload: string | null = null;
+
+			if (filter === "total") {
+				const lastRecord = await prisma.queueHistory.findFirst({
+					where: { queueId: queue.id },
 					orderBy: { timestamp: "desc" },
-					take: 1,
 					select: {
 						uploadBytes: true,
 						downloadBytes: true,
 						totalBytes: true,
 						rateUpload: true,
 						rateDownload: true,
-						packetRate: true,
-						timestamp: true,
 					},
-				},
-			},
-		});
+				});
 
-		return NextResponse.json(serializeBigInt(queues));
+				if (lastRecord) {
+					qUpload = lastRecord.uploadBytes;
+					qDownload = lastRecord.downloadBytes;
+					qTotal = lastRecord.totalBytes;
+					rateUpload = lastRecord.rateUpload;
+					rateDownload = lastRecord.rateDownload;
+				}
+			} else {
+				const records = await prisma.queueHistory.findMany({
+					where: {
+						queueId: queue.id,
+						timestamp: { gte: startDate, lt: endDate },
+					},
+					orderBy: { timestamp: "asc" },
+					select: {
+						uploadBytes: true,
+						downloadBytes: true,
+						rateUpload: true,
+						rateDownload: true,
+					},
+				});
+
+				if (records.length >= 2) {
+					for (let i = 1; i < records.length; i++) {
+						let uploadDelta =
+							records[i].uploadBytes - records[i - 1].uploadBytes;
+						let downloadDelta =
+							records[i].downloadBytes - records[i - 1].downloadBytes;
+
+						if (uploadDelta < BigInt(0)) uploadDelta = records[i].uploadBytes;
+						if (downloadDelta < BigInt(0))
+							downloadDelta = records[i].downloadBytes;
+
+						qUpload += uploadDelta;
+						qDownload += downloadDelta;
+					}
+					qTotal = qUpload + qDownload;
+
+					const lastRec = records[records.length - 1];
+					rateUpload = lastRec.rateUpload;
+					rateDownload = lastRec.rateDownload;
+				} else if (records.length === 1) {
+					// Fallback if only 1 record exists in that month (rare but possible)
+					const lastRec = records[0];
+					rateUpload = lastRec.rateUpload;
+					rateDownload = lastRec.rateDownload;
+				}
+			}
+
+			result.push({
+				...queue,
+				uploadBytes: Number(qUpload),
+				downloadBytes: Number(qDownload),
+				totalBytes: Number(qTotal),
+				rateUpload,
+				rateDownload,
+			});
+		}
+
+		return NextResponse.json(serializeBigInt(result));
 	} catch (error) {
 		console.error("Failed to fetch queues:", error);
 		return NextResponse.json(

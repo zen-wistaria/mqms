@@ -29,7 +29,28 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatBytes } from "@/lib/format";
+
+// Generate last 6 months
+function getLast6Months() {
+	const months = [];
+	const d = new Date();
+	for (let i = 0; i < 6; i++) {
+		const month = new Date(d.getFullYear(), d.getMonth() - i, 1);
+		const value = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
+		const label = month.toLocaleDateString("en-US", {
+			month: "long",
+			year: "numeric",
+		});
+		months.push({ value, label });
+	}
+	return months;
+}
 
 interface QueueData {
 	id: string;
@@ -37,14 +58,11 @@ interface QueueData {
 	target: string;
 	isDeleted: boolean;
 	router: { id: string; name: string; status: string };
-	histories: Array<{
-		uploadBytes: number;
-		downloadBytes: number;
-		totalBytes: number;
-		rateUpload: string | null;
-		rateDownload: string | null;
-		timestamp: string;
-	}>;
+	uploadBytes: number;
+	downloadBytes: number;
+	totalBytes: number;
+	rateUpload: string | null;
+	rateDownload: string | null;
 }
 
 interface RouterOption {
@@ -58,6 +76,9 @@ export default function QueuesPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [routerFilter, setRouterFilter] = useState("all");
 	const [showDeleted, setShowDeleted] = useState(false);
+
+	const months = getLast6Months();
+	const [filter, setFilter] = useState<string>("total");
 
 	const fetchRouters = useCallback(async () => {
 		try {
@@ -76,6 +97,7 @@ export default function QueuesPage() {
 			const params = new URLSearchParams();
 			if (routerFilter !== "all") params.set("routerId", routerFilter);
 			if (showDeleted) params.set("showDeleted", "true");
+			if (filter) params.set("filter", filter);
 
 			const res = await fetch(`/api/queues?${params}`);
 			if (res.ok) setQueues(await res.json());
@@ -84,7 +106,7 @@ export default function QueuesPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [routerFilter, showDeleted]);
+	}, [routerFilter, showDeleted, filter]);
 
 	useEffect(() => {
 		fetchRouters();
@@ -108,13 +130,34 @@ export default function QueuesPage() {
 			{/* Filters */}
 			<div className="flex flex-wrap items-center gap-4">
 				<div className="flex items-center gap-2">
+					<Label className="text-sm text-muted-foreground">Period:</Label>
+					<Select value={filter} onValueChange={(val) => val && setFilter(val)}>
+						<SelectTrigger className="w-[180px]">
+							<SelectValue placeholder="Select period" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="total">Total Accumulated</SelectItem>
+							{months.map((m) => (
+								<SelectItem key={m.value} value={m.value}>
+									{m.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+				<div className="flex items-center gap-2">
 					<Label className="text-sm text-muted-foreground">Router:</Label>
 					<Select
 						value={routerFilter}
 						onValueChange={(val) => setRouterFilter(val || "all")}
 					>
-						<SelectTrigger className="w-[200px]">
-							<SelectValue placeholder="All Routers" />
+						<SelectTrigger className="w-[180px]">
+							<SelectValue placeholder="All Routers">
+								{routerFilter === "all"
+									? "All Routers"
+									: routers.find((r) => r.id === routerFilter)?.name ||
+										"All Routers"}
+							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">All Routers</SelectItem>
@@ -133,7 +176,7 @@ export default function QueuesPage() {
 						onCheckedChange={setShowDeleted}
 					/>
 					<Label htmlFor="show-deleted" className="text-sm">
-						Show deleted queues
+						Show deleted
 					</Label>
 				</div>
 			</div>
@@ -180,17 +223,52 @@ export default function QueuesPage() {
 								</TableHeader>
 								<TableBody>
 									{queues.map((queue) => {
-										const latest = queue.histories[0];
 										return (
 											<TableRow key={queue.id} className="group">
 												<TableCell>
-													<Link
-														href={`/queues/${queue.id}`}
-														className="font-medium hover:text-primary inline-flex items-center gap-1 transition-colors"
-													>
-														{queue.name}
-														<ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-													</Link>
+													<Tooltip>
+														<TooltipTrigger>
+															<Link
+																href={`/queues/${queue.id}`}
+																className="font-medium hover:text-primary inline-flex items-center gap-1 transition-colors cursor-help"
+															>
+																{queue.name}
+																<ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+															</Link>
+														</TooltipTrigger>
+														<TooltipContent
+															side="right"
+															className="p-3 min-w-[150px]"
+														>
+															<p className="font-medium mb-2">{queue.name}</p>
+															<div className="space-y-1.5">
+																<div className="flex justify-between items-center gap-4">
+																	<span className="text-muted-foreground text-xs">
+																		Total:
+																	</span>
+																	<span className="font-mono font-medium text-xs">
+																		{formatBytes(queue.totalBytes)}
+																	</span>
+																</div>
+																<div className="flex justify-between items-center gap-4">
+																	<span className="text-muted-foreground text-xs">
+																		Upload:
+																	</span>
+																	<span className="font-mono text-xs text-upload">
+																		{formatBytes(queue.uploadBytes)}
+																	</span>
+																</div>
+																<div className="flex justify-between items-center gap-4">
+																	<span className="text-muted-foreground text-xs">
+																		Download:
+																	</span>
+																	<span className="font-mono text-xs text-download">
+																		{formatBytes(queue.downloadBytes)}
+																	</span>
+																</div>
+															</div>
+														</TooltipContent>
+													</Tooltip>
 												</TableCell>
 												<TableCell>
 													<Link
@@ -204,13 +282,13 @@ export default function QueuesPage() {
 													{queue.target}
 												</TableCell>
 												<TableCell className="text-right font-mono text-sm text-upload">
-													{latest?.rateUpload || "—"}
+													{queue.rateUpload || "—"}
 												</TableCell>
 												<TableCell className="text-right font-mono text-sm text-download">
-													{latest?.rateDownload || "—"}
+													{queue.rateDownload || "—"}
 												</TableCell>
 												<TableCell className="text-right font-mono text-sm">
-													{latest ? formatBytes(latest.totalBytes) : "—"}
+													{formatBytes(queue.totalBytes)}
 												</TableCell>
 												<TableCell className="text-center">
 													{queue.isDeleted ? (

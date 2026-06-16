@@ -20,6 +20,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatBytes } from "@/lib/format";
 
 interface QueueData {
@@ -32,14 +37,11 @@ interface QueueData {
 		name: string;
 		status: string;
 	};
-	histories: Array<{
-		uploadBytes: number;
-		downloadBytes: number;
-		totalBytes: number;
-		rateUpload: string | null;
-		rateDownload: string | null;
-		timestamp: string;
-	}>;
+	uploadBytes: number;
+	downloadBytes: number;
+	totalBytes: number;
+	rateUpload: string | null;
+	rateDownload: string | null;
 }
 
 export function QueueLiveTable() {
@@ -126,20 +128,55 @@ export function QueueLiveTable() {
 							</TableHeader>
 							<TableBody>
 								{queues.slice(0, 20).map((queue) => {
-									const latest = queue.histories[0];
 									return (
 										<TableRow
 											key={queue.id}
 											className="group hover:bg-accent/50 transition-colors"
 										>
 											<TableCell>
-												<Link
-													href={`/queues/${queue.id}`}
-													className="font-medium hover:text-primary inline-flex items-center gap-1 transition-colors"
-												>
-													{queue.name}
-													<ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-												</Link>
+												<Tooltip>
+													<TooltipTrigger>
+														<Link
+															href={`/queues/${queue.id}`}
+															className="font-medium hover:text-primary inline-flex items-center gap-1 transition-colors cursor-help"
+														>
+															{queue.name}
+															<ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+														</Link>
+													</TooltipTrigger>
+													<TooltipContent
+														side="right"
+														className="p-3 min-w-[150px]"
+													>
+														<p className="font-medium mb-2">{queue.name}</p>
+														<div className="space-y-1.5">
+															<div className="flex justify-between items-center gap-4">
+																<span className="text-muted-foreground text-xs">
+																	Total:
+																</span>
+																<span className="font-mono font-medium text-xs">
+																	{formatBytes(queue.totalBytes)}
+																</span>
+															</div>
+															<div className="flex justify-between items-center gap-4">
+																<span className="text-muted-foreground text-xs">
+																	Upload:
+																</span>
+																<span className="font-mono text-xs text-upload">
+																	{formatBytes(queue.uploadBytes)}
+																</span>
+															</div>
+															<div className="flex justify-between items-center gap-4">
+																<span className="text-muted-foreground text-xs">
+																	Download:
+																</span>
+																<span className="font-mono text-xs text-download">
+																	{formatBytes(queue.downloadBytes)}
+																</span>
+															</div>
+														</div>
+													</TooltipContent>
+												</Tooltip>
 												<p className="text-xs text-muted-foreground mt-0.5">
 													{queue.target}
 												</p>
@@ -153,13 +190,13 @@ export function QueueLiveTable() {
 												</Link>
 											</TableCell>
 											<TableCell className="text-right font-mono text-sm text-upload">
-												{latest?.rateUpload || "—"}
+												{queue.rateUpload || "—"}
 											</TableCell>
 											<TableCell className="text-right font-mono text-sm text-download">
-												{latest?.rateDownload || "—"}
+												{queue.rateDownload || "—"}
 											</TableCell>
 											<TableCell className="text-right font-mono text-sm">
-												{latest ? formatBytes(latest.totalBytes) : "—"}
+												{formatBytes(queue.totalBytes)}
 											</TableCell>
 											<TableCell className="text-center">
 												{queue.isDeleted ? (

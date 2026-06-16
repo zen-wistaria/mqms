@@ -96,18 +96,43 @@ export function TopQueuesChart({ topQueues, isLoading }: TopQueuesChartProps) {
 							/>
 							<Tooltip
 								cursor={{ fill: "var(--muted)" }}
-								contentStyle={{
-									borderRadius: "8px",
-									border: "none",
-									backgroundColor: "var(--background)",
-									boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-									color: "oklch(0.95 0.01 265)",
-									fontSize: 12,
+								content={({ active, payload }) => {
+									if (active && payload?.length) {
+										const data = payload[0].payload;
+										return (
+											<div className="bg-popover text-popover-foreground border rounded-lg p-3 shadow-md text-sm min-w-[150px]">
+												<p className="font-medium mb-2">{data.fullName}</p>
+												<div className="space-y-1.5">
+													<div className="flex justify-between items-center gap-4">
+														<span className="text-muted-foreground text-xs">
+															Total:
+														</span>
+														<span className="font-mono font-medium text-xs">
+															{formatBytes(data.total)}
+														</span>
+													</div>
+													<div className="flex justify-between items-center gap-4">
+														<span className="text-muted-foreground text-xs">
+															Upload:
+														</span>
+														<span className="font-mono text-xs text-upload">
+															{formatBytes(data.upload)}
+														</span>
+													</div>
+													<div className="flex justify-between items-center gap-4">
+														<span className="text-muted-foreground text-xs">
+															Download:
+														</span>
+														<span className="font-mono text-xs text-download">
+															{formatBytes(data.download)}
+														</span>
+													</div>
+												</div>
+											</div>
+										);
+									}
+									return null;
 								}}
-								formatter={(
-									value: number | string | readonly (number | string)[] | undefined,
-								) => [formatBytes(Number(value) || 0), "Total"]}
-								labelFormatter={(label: React.ReactNode) => `Queue: ${label}`}
 							/>
 							<Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24} />
 						</BarChart>

@@ -22,6 +22,7 @@ interface StatsCardsProps {
 		monthlyTotalBytes: number;
 	} | null;
 	isLoading: boolean;
+	filter: string;
 }
 
 const cardConfig = [
@@ -47,31 +48,34 @@ const cardConfig = [
 	},
 	{
 		key: "upload" as const,
-		title: "Upload (MTD)",
+		title: (f: string) => (f === "total" ? "Total Upload" : "Upload"),
 		icon: ArrowUp,
 		getValue: (s: NonNullable<StatsCardsProps["stats"]>) =>
 			formatBytes(s.monthlyUploadBytes),
-		getSubtext: () => "Month to date",
+		getSubtext: (_s: NonNullable<StatsCardsProps["stats"]>, f: string) =>
+			f === "total" ? "Accumulated traffic" : "Selected month",
 		gradient: "from-orange-500/10 to-orange-500/5",
 		iconColor: "text-orange-400",
 	},
 	{
 		key: "download" as const,
-		title: "Download (MTD)",
+		title: (f: string) => (f === "total" ? "Total Download" : "Download"),
 		icon: ArrowDown,
 		getValue: (s: NonNullable<StatsCardsProps["stats"]>) =>
 			formatBytes(s.monthlyDownloadBytes),
-		getSubtext: () => "Month to date",
+		getSubtext: (_s: NonNullable<StatsCardsProps["stats"]>, f: string) =>
+			f === "total" ? "Accumulated traffic" : "Selected month",
 		gradient: "from-emerald-500/10 to-emerald-500/5",
 		iconColor: "text-emerald-400",
 	},
 	{
 		key: "total" as const,
-		title: "Total (MTD)",
+		title: (f: string) => (f === "total" ? "Total Traffic" : "Traffic"),
 		icon: ArrowUpDown,
 		getValue: (s: NonNullable<StatsCardsProps["stats"]>) =>
 			formatBytes(s.monthlyTotalBytes),
-		getSubtext: () => "Combined traffic",
+		getSubtext: (_s: NonNullable<StatsCardsProps["stats"]>, f: string) =>
+			f === "total" ? "Combined traffic" : "Selected month",
 		gradient: "from-pink-500/10 to-pink-500/5",
 		iconColor: "text-pink-400",
 	},
@@ -90,7 +94,7 @@ const cardConfig = [
 	},
 ];
 
-export function StatsCards({ stats, isLoading }: StatsCardsProps) {
+export function StatsCards({ stats, isLoading, filter }: StatsCardsProps) {
 	if (isLoading) {
 		return (
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -111,6 +115,9 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 			{cardConfig.map((card) => {
 				const Icon = card.icon;
+				const titleText =
+					typeof card.title === "function" ? card.title(filter) : card.title;
+
 				return (
 					<Card
 						key={card.key}
@@ -119,7 +126,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
 						<CardContent className="p-4">
 							<div className="flex items-center justify-between mb-3">
 								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-									{card.title}
+									{titleText}
 								</p>
 								<Icon className={`h-4 w-4 ${card.iconColor}`} />
 							</div>
@@ -127,7 +134,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
 								{stats ? card.getValue(stats) : "—"}
 							</div>
 							<p className="text-xs text-muted-foreground mt-1">
-								{stats ? card.getSubtext(stats) : ""}
+								{stats ? card.getSubtext(stats, filter) : ""}
 							</p>
 						</CardContent>
 					</Card>

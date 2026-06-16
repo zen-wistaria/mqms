@@ -3,10 +3,28 @@ import { serializeBigInt } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/dashboard/stats — Dashboard summary statistics
-export async function GET() {
+export async function GET(request: Request) {
 	try {
+		const { searchParams } = new URL(request.url);
+		let filter = searchParams.get("filter");
+
 		const now = new Date();
-		const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+		if (!filter) {
+			filter = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+		}
+
+		let startDate: Date;
+		let endDate: Date;
+
+		if (filter !== "total") {
+			const [year, month] = filter.split("-").map(Number);
+			startDate = new Date(year, month - 1, 1);
+			endDate = new Date(year, month, 1);
+		} else {
+			// For total, we just need a dummy date or ignore it
+			startDate = new Date(0);
+			endDate = new Date();
+		}
 
 		// Counts
 		const [routerCount, queueCount, onlineRouterCount] = await Promise.all([
@@ -34,33 +52,50 @@ export async function GET() {
 		}> = [];
 
 		for (const queue of queues) {
-			const records = await prisma.queueHistory.findMany({
-				where: {
-					queueId: queue.id,
-					timestamp: { gte: startOfMonth },
-				},
-				orderBy: { timestamp: "asc" },
-				select: {
-					uploadBytes: true,
-					downloadBytes: true,
-				},
-			});
-
-			if (records.length < 2) continue;
-
 			let qUpload = BigInt(0);
 			let qDownload = BigInt(0);
 
-			for (let i = 1; i < records.length; i++) {
-				let uploadDelta = records[i].uploadBytes - records[i - 1].uploadBytes;
-				let downloadDelta =
-					records[i].downloadBytes - records[i - 1].downloadBytes;
+			if (filter === "total") {
+				const lastRecord = await prisma.queueHistory.findFirst({
+					where: { queueId: queue.id },
+					orderBy: { timestamp: "desc" },
+					select: {
+						uploadBytes: true,
+						downloadBytes: true,
+					},
+				});
 
-				if (uploadDelta < BigInt(0)) uploadDelta = records[i].uploadBytes;
-				if (downloadDelta < BigInt(0)) downloadDelta = records[i].downloadBytes;
+				if (!lastRecord) continue;
 
-				qUpload += uploadDelta;
-				qDownload += downloadDelta;
+				qUpload = lastRecord.uploadBytes;
+				qDownload = lastRecord.downloadBytes;
+			} else {
+				const records = await prisma.queueHistory.findMany({
+					where: {
+						queueId: queue.id,
+						timestamp: { gte: startDate, lt: endDate },
+					},
+					orderBy: { timestamp: "asc" },
+					select: {
+						uploadBytes: true,
+						downloadBytes: true,
+					},
+				});
+
+				if (records.length < 2) continue;
+
+				for (let i = 1; i < records.length; i++) {
+					let uploadDelta = records[i].uploadBytes - records[i - 1].uploadBytes;
+					let downloadDelta =
+						records[i].downloadBytes - records[i - 1].downloadBytes;
+
+					if (uploadDelta < BigInt(0)) uploadDelta = records[i].uploadBytes;
+					if (downloadDelta < BigInt(0))
+						downloadDelta = records[i].downloadBytes;
+
+					qUpload += uploadDelta;
+					qDownload += downloadDelta;
+				}
 			}
 
 			totalUpload += qUpload;
