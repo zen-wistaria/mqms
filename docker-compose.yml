@@ -6,11 +6,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - db_data:/app/prisma
+      - db_data:/app/data
     environment:
-      - DATABASE_URL=file:./prisma/prod.db
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=http://localhost:3000
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     depends_on:
       - migrate
@@ -20,17 +19,14 @@ services:
     image: mqms:latest
     command: ["bun", "db:migrate"]
     volumes:
-      - db_data:/app/prisma
-    environment:
-      - DATABASE_URL=file:./prisma/prod.db
+      - db_data:/app/data
 
   worker:
     image: mqms:latest
     command: ["bun", "worker.js"]
     volumes:
-      - db_data:/app/prisma
+      - db_data:/app/data
     environment:
-      - DATABASE_URL=file:./prisma/prod.db
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - POLLING_INTERVAL_MS=${POLLING_INTERVAL_MS:-60000}
       - SYNC_INTERVAL_MS=${SYNC_INTERVAL_MS:-300000}

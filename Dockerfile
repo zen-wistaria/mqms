@@ -16,10 +16,19 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PRISMA_CLIENT_ENGINE_TYPE=library
 
 RUN bunx prisma generate
 RUN bun run build
-RUN bun build ./src/worker/index.ts --target=bun --outfile=./worker.js --external=@prisma/client --external=prisma
+RUN bun build ./src/worker/index.ts \
+    --target=bun \
+    --outfile=./worker.js \
+    --external=@prisma/client
+RUN bun build ./prisma/seed.ts \
+    --target=bun \
+    --outfile=./seed.js \
+    --external=@prisma/client
+    # --external=@prisma/adapter-libsql
 
 # ---- Prisma ----
 FROM oven/bun:alpine AS prisma
@@ -34,6 +43,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PRISMA_CLIENT_ENGINE_TYPE=library
+ENV DATABASE_URL=file:./data/data.db
 
 RUN addgroup --system --gid 1001 mqms
 RUN adduser --system --uid 1001 mqms
@@ -47,10 +58,11 @@ COPY --from=builder --chown=mqms:mqms /app/prisma.config.ts ./prisma.config.ts
 # Minimal Prisma
 COPY --from=prisma --chown=mqms:mqms /app/node_modules ./node_modules
 
-# Worker bundled file
+# Bundled scripts
 COPY --from=builder --chown=mqms:mqms /app/worker.js ./worker.js
+COPY --from=builder --chown=mqms:mqms /app/seed.js ./seed.js
 
-RUN chown -R mqms:mqms /app
+RUN mkdir /app/data && chown -R mqms:mqms /app/data
 
 USER mqms
 

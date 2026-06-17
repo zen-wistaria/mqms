@@ -8,6 +8,17 @@ export const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
+		password: {
+			hash: async (password) => {
+				return Bun.password.hash(password, {
+					algorithm: "bcrypt",
+					cost: 12
+				});
+			},
+			verify: async ({password, hash}) => {
+				return Bun.password.verify(password, hash, "bcrypt");
+			},
+		},
 	},
 	session: {
 		expiresIn: 60 * 60 * 24 * 7, // 7 days
