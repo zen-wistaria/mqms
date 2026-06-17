@@ -97,7 +97,6 @@ export default function RouterDetailPage({
 			setIsLoading(false);
 		}
 	}, [id]);
-	console.log(router)
 
 	useEffect(() => {
 		fetchRouter();
@@ -315,7 +314,17 @@ export default function RouterDetailPage({
 						REST API Executor
 					</CardTitle>
 					<CardDescription>
-						Execute arbitrary REST API commands directly on this router.
+						Execute arbitrary REST API commands directly on this router. <br />
+						docs:{" "}
+						<span className="text-blue-500">
+							<Link
+								target="_blank"
+								className="hover:underline"
+								href="https://manual.mikrotik.com/docs/developer-guides/rest-api"
+							>
+								https://manual.mikrotik.com/docs/developer-guides/rest-api
+							</Link>
+						</span>
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="pt-4 space-y-4">
