@@ -168,3 +168,42 @@ export async function fetchQueues(
 	const response = await client.get("/queue/simple");
 	return response.data as MikrotikQueueData[];
 }
+
+/**
+ * Execute an arbitrary REST command on the MikroTik router.
+ */
+export async function executeRestCommand(
+	config: RouterConfig,
+	method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+	path: string,
+	body?: Record<string, unknown>,
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
+	try {
+		const client = createClient(config);
+		// Ensure path doesn't start with /rest since baseURL already has it
+		const cleanPath = path.replace(/^\/?rest\//, "").replace(/^\//, "");
+
+		const response = await client.request({
+			method,
+			url: `/${cleanPath}`,
+			data: body,
+		});
+
+		return { success: true, data: response.data };
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			let errorMessage = error.message;
+			if (error.response?.data) {
+				errorMessage =
+					typeof error.response.data === "string"
+						? error.response.data
+						: JSON.stringify(error.response.data);
+			}
+			return {
+				success: false,
+				error: `HTTP ${error.response?.status || "Unknown"}: ${errorMessage}`,
+			};
+		}
+		return { success: false, error: String(error) };
+	}
+}

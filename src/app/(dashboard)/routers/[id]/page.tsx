@@ -7,6 +7,7 @@ import {
 	ExternalLink,
 	Loader2,
 	RefreshCw,
+	TerminalSquare,
 	Wifi,
 	WifiOff,
 } from "lucide-react";
@@ -22,6 +23,14 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
@@ -31,6 +40,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 
 interface RouterDetail {
 	id: string;
@@ -64,6 +74,13 @@ export default function RouterDetailPage({
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [isPolling, setIsPolling] = useState(false);
+
+	// Command Executor State
+	const [cmdMethod, setCmdMethod] = useState("GET");
+	const [cmdPath, setCmdPath] = useState("");
+	const [cmdBody, setCmdBody] = useState("");
+	const [isExecuting, setIsExecuting] = useState(false);
+	const [cmdResponse, setCmdResponse] = useState<string | null>(null);
 
 	const fetchRouter = useCallback(async () => {
 		try {
@@ -113,6 +130,56 @@ export default function RouterDetailPage({
 			toast.error("Poll failed");
 		} finally {
 			setIsPolling(false);
+		}
+	};
+
+	const handleExecuteCommand = async () => {
+		if (!cmdPath.trim()) {
+			toast.error("Path is required");
+			return;
+		}
+
+		setIsExecuting(true);
+		setCmdResponse("Executing command...");
+
+		try {
+			let parsedBody: Record<string, unknown> | undefined;
+			if (cmdBody.trim() && cmdMethod !== "GET" && cmdMethod !== "DELETE") {
+				try {
+					parsedBody = JSON.parse(cmdBody);
+				} catch (_e) {
+					toast.error("Invalid JSON body");
+					setCmdResponse(
+						JSON.stringify({ error: "Invalid JSON format in body" }, null, 2),
+					);
+					setIsExecuting(false);
+					return;
+				}
+			}
+
+			const res = await fetch(`/api/routers/${id}/command`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					method: cmdMethod,
+					path: cmdPath,
+					commandBody: parsedBody,
+				}),
+			});
+
+			const data = await res.json();
+			if (res.ok) {
+				setCmdResponse(JSON.stringify(data.data || data, null, 2));
+				toast.success("Command executed successfully");
+			} else {
+				setCmdResponse(JSON.stringify(data, null, 2));
+				toast.error(data.error || "Command failed");
+			}
+		} catch (error) {
+			setCmdResponse(String(error));
+			toast.error("An unexpected error occurred");
+		} finally {
+			setIsExecuting(false);
 		}
 	};
 
@@ -235,6 +302,94 @@ export default function RouterDetailPage({
 					</CardContent>
 				</Card>
 			)}
+
+			{/* Command Executor Card */}
+			<Card className="border-primary/20 shadow-md">
+				<CardHeader className="pb-3 bg-primary/5 rounded-t-xl border-b border-primary/10">
+					<CardTitle className="text-base flex items-center gap-2">
+						<TerminalSquare className="h-5 w-5 text-primary" />
+						REST API Executor
+					</CardTitle>
+					<CardDescription>
+						Execute arbitrary REST API commands directly on this router.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="pt-4 space-y-4">
+					<div className="flex flex-col md:flex-row gap-3">
+						<div className="w-full md:w-[150px]">
+							<Select
+								value={cmdMethod}
+								onValueChange={(v) => setCmdMethod(v || "GET")}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Method" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="GET">GET</SelectItem>
+									<SelectItem value="POST">POST</SelectItem>
+									<SelectItem value="PUT">PUT</SelectItem>
+									<SelectItem value="PATCH">PATCH</SelectItem>
+									<SelectItem value="DELETE">DELETE</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="flex-1 flex gap-2 relative">
+							<span className="absolute left-3 top-2.5 text-muted-foreground text-sm select-none">
+								/rest/
+							</span>
+							<Input
+								placeholder="system/identity"
+								value={cmdPath}
+								onChange={(e) => setCmdPath(e.target.value)}
+								className="pl-14 font-mono text-sm"
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault();
+										handleExecuteCommand();
+									}
+								}}
+							/>
+						</div>
+						<Button
+							onClick={handleExecuteCommand}
+							disabled={isExecuting || !cmdPath.trim()}
+							className="w-full md:w-auto"
+						>
+							{isExecuting ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							) : (
+								<TerminalSquare className="mr-2 h-4 w-4" />
+							)}
+							Execute
+						</Button>
+					</div>
+
+					{cmdMethod !== "GET" && cmdMethod !== "DELETE" && (
+						<div className="space-y-1">
+							<p className="text-xs font-medium text-muted-foreground mb-1">
+								JSON Body (Optional)
+							</p>
+							<Textarea
+								placeholder='{"name": "new-identity"}'
+								value={cmdBody}
+								onChange={(e) => setCmdBody(e.target.value)}
+								className="font-mono text-xs min-h-[80px]"
+							/>
+						</div>
+					)}
+
+					{cmdResponse && (
+						<div className="mt-4 rounded-md border bg-black/90 p-4 overflow-hidden relative group">
+							<div className="absolute top-2 right-2 text-[10px] text-zinc-500 uppercase font-mono">
+								Response Output
+							</div>
+							<pre className="text-xs text-green-400 font-mono whitespace-pre-wrap overflow-auto max-h-[400px]">
+								{cmdResponse}
+							</pre>
+						</div>
+					)}
+				</CardContent>
+			</Card>
 
 			{/* Queues Table */}
 			<Card>
