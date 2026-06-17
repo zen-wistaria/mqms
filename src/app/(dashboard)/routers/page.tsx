@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import {
 	AlertTriangle,
 	Edit,
+	ExternalLink,
 	Eye,
 	EyeOff,
 	Loader2,
@@ -455,9 +456,10 @@ export default function RoutersPage() {
 											<TableCell>
 												<Link
 													href={`/routers/${router.id}`}
-													className="font-medium hover:text-primary transition-colors"
+													className="font-medium hover:text-primary inline-flex items-center gap-1 transition-colors"
 												>
 													{router.name}
+													<ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
 												</Link>
 												{!router.isActive && (
 													<Badge variant="secondary" className="ml-2 text-xs">

@@ -7,6 +7,8 @@ export interface MikrotikQueueData {
 	name: string;
 	target: string;
 	"max-limit"?: string;
+	"limit-at"?: string;
+	parent?: string;
 	bytes: string; // "upload/download" format
 	rate: string; // "upload/download" format
 	"packet-rate"?: string;

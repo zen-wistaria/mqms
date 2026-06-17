@@ -240,13 +240,15 @@ export default function QueuesPage() {
 															side="right"
 															className="p-3 min-w-[150px]"
 														>
-															<p className="font-medium mb-2">{queue.name}</p>
 															<div className="space-y-1.5">
+																<p className="font-medium mb-2 text-foreground">
+																	{queue.name}
+																</p>
 																<div className="flex justify-between items-center gap-4">
 																	<span className="text-muted-foreground text-xs">
 																		Total:
 																	</span>
-																	<span className="font-mono font-medium text-xs">
+																	<span className="font-mono font-medium text-xs text-foreground">
 																		{formatBytes(queue.totalBytes)}
 																	</span>
 																</div>

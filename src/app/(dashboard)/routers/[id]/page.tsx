@@ -41,6 +41,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { formatBytes, parseMikrotikBytes } from "@/lib/format";
 
 interface RouterDetail {
 	id: string;
@@ -57,7 +58,9 @@ interface RouterDetail {
 		id: string;
 		name: string;
 		target: string;
-		maxLimit: string | null;
+		limitAt: string;
+		maxLimit: string;
+		parent: string;
 		isDeleted: boolean;
 		lastSeenAt: string;
 	}>;
@@ -94,6 +97,7 @@ export default function RouterDetailPage({
 			setIsLoading(false);
 		}
 	}, [id]);
+	console.log(router)
 
 	useEffect(() => {
 		fetchRouter();
@@ -334,7 +338,7 @@ export default function RouterDetailPage({
 							</Select>
 						</div>
 						<div className="flex-1 flex gap-2 relative">
-							<span className="absolute left-3 top-2.5 text-muted-foreground text-sm select-none">
+							<span className="absolute left-3 top-1.5 text-muted-foreground text-sm select-none">
 								/rest/
 							</span>
 							<Input
@@ -411,6 +415,8 @@ export default function RouterDetailPage({
 								<TableRow>
 									<TableHead>Queue Name</TableHead>
 									<TableHead>Target</TableHead>
+									<TableHead>Parent</TableHead>
+									<TableHead>Limit At</TableHead>
 									<TableHead>Max Limit</TableHead>
 									<TableHead>Last Seen</TableHead>
 									<TableHead className="text-center">Status</TableHead>
@@ -431,8 +437,14 @@ export default function RouterDetailPage({
 										<TableCell className="font-mono text-sm">
 											{queue.target}
 										</TableCell>
+										<TableCell className="font-mono text-sm">
+											{queue.parent}
+										</TableCell>
 										<TableCell className="text-sm">
-											{queue.maxLimit || "—"}
+											{`${formatBytes(parseMikrotikBytes(queue.limitAt).upload)}/${formatBytes(parseMikrotikBytes(queue.limitAt).download)}`}
+										</TableCell>
+										<TableCell className="text-sm">
+											{`${formatBytes(parseMikrotikBytes(queue.maxLimit).upload)}/${formatBytes(parseMikrotikBytes(queue.maxLimit).download)}`}
 										</TableCell>
 										<TableCell className="text-sm text-muted-foreground">
 											{formatDistanceToNow(new Date(queue.lastSeenAt), {

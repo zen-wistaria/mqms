@@ -106,7 +106,9 @@ model Queue {
   routerId   String
   name       String
   target     String
-  maxLimit   String? // e.g. "10M/20M"
+  maxLimit   String   @default("0/0")
+  limitAt    String   @default("0/0")
+  parent     String   @default("")
   isDeleted  Boolean  @default(false)
   lastSeenAt DateTime @default(now())
   createdAt  DateTime @default(now())
