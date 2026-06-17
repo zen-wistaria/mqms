@@ -84,11 +84,13 @@ export default function DashboardLayout({
 								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
 									<div className="relative">
 										<Network className="size-4" />
-										<Activity className="size-2 text-chart-2 absolute -bottom-0.5 -right-1" />
 									</div>
 								</div>
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-bold">MQMS</span>
+									<div className="flex items-center gap-2 mb-1">
+										<span className="truncate font-bold">MQMS</span>
+										<Activity className="h-4 w-4 -mt-2.5 -ml-2" />
+									</div>
 									<span className="truncate text-xs text-muted-foreground">
 										Queue Monitor
 									</span>

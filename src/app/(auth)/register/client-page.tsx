@@ -78,9 +78,9 @@ export default function RegisterPage() {
 					<div className="flex items-center gap-2 mb-2">
 						<div className="relative">
 							<Network className="h-10 w-10 text-primary" />
-							<Activity className="h-4 w-4 text-chart-2 absolute -bottom-0.5 -right-0.5" />
 						</div>
 						<h1 className="text-3xl font-bold gradient-text">MQMS</h1>
+						<Activity className="h-4 w-4 text-chart-2 -mt-4 -ml-2" />
 					</div>
 					<p className="text-muted-foreground text-sm">
 						MikroTik Queue Monitoring System
@@ -97,7 +97,7 @@ export default function RegisterPage() {
 						</CardDescription>
 					</CardHeader>
 					<form onSubmit={handleRegister}>
-						<CardContent className="space-y-4">
+						<CardContent className="space-y-4 pb-5">
 							<div className="space-y-2">
 								<Label htmlFor="name">Full Name</Label>
 								<Input
