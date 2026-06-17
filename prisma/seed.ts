@@ -1,3 +1,4 @@
+import { hash } from "bcrypt-ts";
 import prisma from "@/lib/prisma";
 
 async function main() {
@@ -15,10 +16,7 @@ async function main() {
 	const passwordStr = process.env.SEED_PASSWORD || "admin123";
 	const name = process.env.SEED_NAME || "Administrator";
 
-	const hashedPassword = await Bun.password.hash(passwordStr, {
-		algorithm: "bcrypt",
-		cost: 12,
-	});
+	const hashedPassword = await hash(passwordStr, 12);
 
 	const user = await prisma.user.create({
 		data: {

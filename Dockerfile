@@ -27,8 +27,8 @@ RUN bun build ./src/worker/index.ts \
 RUN bun build ./prisma/seed.ts \
     --target=bun \
     --outfile=./seed.js \
-    --external=@prisma/client
-    # --external=@prisma/adapter-libsql
+    --external=@prisma/client \
+    --external=bcrypt-ts
 
 # ---- Prisma ----
 FROM oven/bun:alpine AS prisma

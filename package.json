@@ -19,6 +19,7 @@
 		"@prisma/adapter-libsql": "^7.8.0",
 		"@prisma/client": "^7.8.0",
 		"axios": "^1.18.0",
+		"bcrypt-ts": "^8.0.1",
 		"better-auth": "^1.6.19",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",

@@ -1,5 +1,7 @@
+import { compare, hash } from "bcrypt-ts";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
@@ -10,13 +12,10 @@ export const auth = betterAuth({
 		enabled: true,
 		password: {
 			hash: async (password) => {
-				return Bun.password.hash(password, {
-					algorithm: "bcrypt",
-					cost: 12
-				});
+				return hash(password, 12);
 			},
-			verify: async ({password, hash}) => {
-				return Bun.password.verify(password, hash, "bcrypt");
+			verify: async ({ password, hash }) => {
+				return compare(password, hash);
 			},
 		},
 	},
