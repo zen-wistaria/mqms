@@ -24,6 +24,27 @@ import {
 import { VoucherPrintDialog } from "@/components/voucher/voucher-print-dialog";
 import type { VoucherPrintData } from "@/components/voucher/voucher-print-templates";
 
+// Label maps for proper display in SelectValue
+const USERMODE_LABELS: Record<string, string> = {
+	up: "User & Password",
+	vc: "Username = Password",
+};
+
+const CHAR_LABELS: Record<string, string> = {
+	lower: "Random abcd",
+	upper: "Random ABCD",
+	upplow: "Random aBcD",
+	mix: "Random 5ab2c",
+	mix1: "Random 5AB2C",
+	mix2: "Random 5aB2c",
+	num: "Random 1234",
+};
+
+const MBGB_LABELS: Record<string, string> = {
+	"1048576": "MB",
+	"1073741824": "GB",
+};
+
 export default function HotspotGeneratePage() {
 	const [routerId, setRouterId] = useState<string>("");
 	const [isGenerating, setIsGenerating] = useState(false);
@@ -195,7 +216,9 @@ export default function HotspotGeneratePage() {
 										}
 									>
 										<SelectTrigger>
-											<SelectValue />
+											<SelectValue>
+												{USERMODE_LABELS[form.userMode] || form.userMode}
+											</SelectValue>
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="up">User & Password</SelectItem>
@@ -244,7 +267,9 @@ export default function HotspotGeneratePage() {
 										}
 									>
 										<SelectTrigger>
-											<SelectValue />
+											<SelectValue>
+												{CHAR_LABELS[form.charType] || form.charType}
+											</SelectValue>
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value="lower">Random abcd</SelectItem>
@@ -315,7 +340,9 @@ export default function HotspotGeneratePage() {
 											}
 										>
 											<SelectTrigger className="w-[100px]">
-												<SelectValue />
+												<SelectValue>
+													{MBGB_LABELS[form.mbgb] || "MB"}
+												</SelectValue>
 											</SelectTrigger>
 											<SelectContent>
 												<SelectItem value="1048576">MB</SelectItem>

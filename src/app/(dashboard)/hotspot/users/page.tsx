@@ -39,6 +39,7 @@ export default function HotspotUsersPage() {
 	const queryClient = useQueryClient();
 	const [routerId, setRouterId] = useState<string>("");
 	const [search, setSearch] = useState("");
+	const [batchFilter, setBatchFilter] = useState("");
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [printData, setPrintData] = useState<VoucherPrintData | null>(null);
 	const [showPrint, setShowPrint] = useState(false);
@@ -184,11 +185,13 @@ export default function HotspotUsersPage() {
 		),
 	).sort().reverse() as string[];
 
-	const filteredUsers = (users as any[]).filter(
-		(u) =>
+	const filteredUsers = (users as any[]).filter((u) => {
+		if (batchFilter && u.comment !== batchFilter) return false;
+		return (
 			(u.name && u.name.toLowerCase().includes(search.toLowerCase())) ||
-			(u.comment && u.comment.toLowerCase().includes(search.toLowerCase())),
-	);
+			(u.comment && u.comment.toLowerCase().includes(search.toLowerCase()))
+		);
+	});
 
 	const handlePrintBatch = (comment: string) => {
 		const batchUsers = (users as any[]).filter((u) => u.comment === comment);
@@ -246,15 +249,36 @@ export default function HotspotUsersPage() {
 			<div className="space-y-4">
 				{/* Toolbar */}
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-					<div className="relative w-full max-w-sm">
-						<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-						<Input
-							type="text"
-							placeholder="Cari nama atau comment..."
-							className="pl-8"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-						/>
+					<div className="flex items-center gap-2 w-full sm:w-auto">
+						<div className="relative w-full max-w-sm">
+							<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+							<Input
+								type="text"
+								placeholder="Cari nama atau comment..."
+								className="pl-8"
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+							/>
+						</div>
+						{batchComments.length > 0 && (
+							<div className="min-w-[180px]">
+								<Select value={batchFilter} onValueChange={(v) => setBatchFilter(v ?? "")}>
+									<SelectTrigger>
+										<SelectValue>
+											{batchFilter ? batchFilter : "Semua Batch"}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="">Semua Batch</SelectItem>
+										{batchComments.slice(0, 30).map((c) => (
+											<SelectItem key={c} value={c}>
+												{c}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						)}
 					</div>
 
 					<div className="flex items-center gap-2">
@@ -362,7 +386,7 @@ export default function HotspotUsersPage() {
 				</div>
 
 				{/* Batch quick print */}
-				{batchComments.length > 0 && !search && (
+				{batchComments.length > 0 && !search && !batchFilter && (
 					<div className="flex flex-wrap gap-2">
 						<span className="text-xs text-muted-foreground self-center">
 							Batch:

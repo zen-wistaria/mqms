@@ -17,6 +17,7 @@ const hotspotNav = [
 	{ name: "Users", href: "/hotspot/users" },
 	{ name: "Generate Vouchers", href: "/hotspot/generate" },
 	{ name: "Active", href: "/hotspot/active" },
+	{ name: "Batch", href: "/hotspot/batch" },
 	{ name: "Profiles", href: "/hotspot/profiles" },
 ];
 
