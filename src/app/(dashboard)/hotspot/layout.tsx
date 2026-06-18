@@ -18,6 +18,7 @@ const hotspotNav = [
 	{ name: "Generate Vouchers", href: "/hotspot/generate" },
 	{ name: "Active", href: "/hotspot/active" },
 	{ name: "Batch", href: "/hotspot/batch" },
+	{ name: "IP Binding", href: "/hotspot/ip-binding" },
 	{ name: "Profiles", href: "/hotspot/profiles" },
 ];
 
