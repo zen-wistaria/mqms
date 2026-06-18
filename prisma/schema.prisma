@@ -162,3 +162,44 @@ model QueueHistory {
   @@index([queueId, timestamp])
   @@map("queue_histories")
 }
+
+// ============================================
+// WireGuard VPN
+// ============================================
+
+model WireguardConfig {
+  id         String   @id @default("default")
+  privateKey String
+  publicKey  String
+  address    String   @default("10.0.0.1/24")
+  port       Int      @default(51820)
+  mtu        Int      @default(1420)
+  dns        String   @default("10.0.0.1")
+  nextIp     Int      @default(2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("wireguard_config")
+}
+
+model WireguardPeer {
+  id                   String   @id @default(cuid())
+  name                 String
+  enabled              Boolean  @default(true)
+  privateKey           String
+  publicKey            String
+  presharedKey         String?
+  allowedIPs           String
+  address              String
+  endpoint             String?
+  dns                  String?
+  persistentKeepalive  Int      @default(25)
+  comment              String?
+  transferRx           BigInt   @default(0)
+  transferTx           BigInt   @default(0)
+  latestHandshakeAt    DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("wireguard_peers")
+}

@@ -9,6 +9,7 @@ import {
 	Network,
 	Router,
 	Settings,
+	Shield,
 	Users,
 	Wifi,
 } from "lucide-react";
@@ -60,6 +61,12 @@ const navItems = [
 		title: "Hotspot",
 		href: "/hotspot",
 		icon: Wifi,
+	},
+	{
+		title: "VPN",
+		href: "/vpn",
+		icon: Shield,
+		adminOnly: true,
 	},
 	{
 		title: "Settings",

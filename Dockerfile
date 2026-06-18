@@ -46,6 +46,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PRISMA_CLIENT_ENGINE_TYPE=library
 ENV DATABASE_URL=file:./data/data.db
 
+# Install wireguard-tools for VPN feature
+RUN apk add --no-cache wireguard-tools
+
 RUN addgroup --system --gid 1001 mqms
 RUN adduser --system --uid 1001 mqms
 
