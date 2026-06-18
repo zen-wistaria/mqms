@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 			}
 		}
 
-		// Create user + account record for better-auth
+		// Create user
 		const user = await prisma.user.create({
 			data: {
 				name: name.trim(),
@@ -76,16 +76,30 @@ export async function POST(request: NextRequest) {
 			},
 		});
 
-		// Create account record so better-auth recognizes this user
+		// Create credential account records for better-auth
 		const hashed = await hash(password.trim(), 12);
+
+		// Email credential
 		await prisma.account.create({
 			data: {
 				userId: user.id,
-				providerId: "email",
+				providerId: "credential",
 				accountId: email.trim(),
 				password: hashed,
 			},
 		});
+
+		// Username credential (if provided)
+		if (user.username) {
+			await prisma.account.create({
+				data: {
+					userId: user.id,
+					providerId: "credential",
+					accountId: user.username,
+					password: hashed,
+				},
+			});
+		}
 
 		return NextResponse.json(
 			{

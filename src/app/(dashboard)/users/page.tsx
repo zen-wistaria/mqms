@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Edit, Shield, UserCog, UserPlus, X } from "lucide-react";
+import { Check, Edit, Shield, Trash2, UserCog, UserPlus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -75,6 +75,8 @@ export default function UsersManagePage() {
 
 	const [addDialog, setAddDialog] = useState(false);
 	const [addForm, setAddForm] = useState<UserForm>(emptyForm);
+
+	const [deleteConfirm, setDeleteConfirm] = useState<UserData | null>(null);
 
 	useEffect(() => {
 		fetch("/api/users")
@@ -152,10 +154,7 @@ export default function UsersManagePage() {
 	});
 
 	const editMutation = useMutation({
-		mutationFn: async ({
-			userId,
-			data,
-		}: { userId: string; data: UserForm }) => {
+		mutationFn: async ({ userId, data }: { userId: string; data: UserForm }) => {
 			const res = await fetch(`/api/users/${userId}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
@@ -234,13 +233,31 @@ export default function UsersManagePage() {
 			}
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["userRouters", assignDialog?.id],
-			});
+			queryClient.invalidateQueries({ queryKey: ["userRouters", assignDialog?.id] });
 			queryClient.invalidateQueries({ queryKey: ["users"] });
 		},
 		onError: (error: any) => {
 			toast.error(error.message || "Gagal");
+		},
+	});
+
+	const deleteMutation = useMutation({
+		mutationFn: async (userId: string) => {
+			const res = await fetch(`/api/users/${userId}`, { method: "DELETE" });
+			if (!res.ok) {
+				const d = await res.json();
+				throw new Error(d.error || "Failed to delete user");
+			}
+			return res.json();
+		},
+		onSuccess: () => {
+			toast.success("User dan semua data terkait dihapus");
+			queryClient.invalidateQueries({ queryKey: ["users"] });
+			setDeleteConfirm(null);
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Gagal hapus user");
+			setDeleteConfirm(null);
 		},
 	});
 
@@ -277,7 +294,7 @@ export default function UsersManagePage() {
 							<TableHead>Username</TableHead>
 							<TableHead>Role</TableHead>
 							<TableHead>Router</TableHead>
-							<TableHead className="w-[160px]">Actions</TableHead>
+							<TableHead className="w-[200px]">Actions</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -289,10 +306,7 @@ export default function UsersManagePage() {
 							</TableRow>
 						) : users.length === 0 ? (
 							<TableRow>
-								<TableCell
-									colSpan={6}
-									className="text-center py-8 text-muted-foreground"
-								>
+								<TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
 									Tidak ada user.
 								</TableCell>
 							</TableRow>
@@ -307,11 +321,7 @@ export default function UsersManagePage() {
 										{user.username || "-"}
 									</TableCell>
 									<TableCell>
-										<Badge
-											variant={
-												user.role === "admin" ? "default" : "secondary"
-											}
-										>
+										<Badge variant={user.role === "admin" ? "default" : "secondary"}>
 											{user.role === "admin" ? (
 												<Shield className="mr-1 h-3 w-3" />
 											) : (
@@ -320,9 +330,7 @@ export default function UsersManagePage() {
 											{user.role}
 										</Badge>
 									</TableCell>
-									<TableCell>
-										{user._count.assignedRouters} router
-									</TableCell>
+									<TableCell>{user._count.assignedRouters} router</TableCell>
 									<TableCell>
 										<div className="flex items-center gap-1">
 											<Select
@@ -339,21 +347,14 @@ export default function UsersManagePage() {
 													<SelectItem value="user">user</SelectItem>
 												</SelectContent>
 											</Select>
-											<Button
-												variant="outline"
-												size="icon"
-												onClick={() => openEdit(user)}
-												title="Edit"
-											>
+											<Button variant="outline" size="icon" onClick={() => openEdit(user)} title="Edit">
 												<Edit className="h-4 w-4" />
 											</Button>
-											<Button
-												variant="outline"
-												size="icon"
-												onClick={() => setAssignDialog(user)}
-												title="Router"
-											>
+											<Button variant="outline" size="icon" onClick={() => setAssignDialog(user)} title="Router">
 												<Shield className="h-4 w-4" />
+											</Button>
+											<Button variant="outline" size="icon" onClick={() => setDeleteConfirm(user)} title="Hapus">
+												<Trash2 className="h-4 w-4 text-destructive" />
 											</Button>
 										</div>
 									</TableCell>
@@ -369,10 +370,7 @@ export default function UsersManagePage() {
 					open
 					onClose={() => setRoleChange(null)}
 					onConfirm={() =>
-						roleMutation.mutate({
-							userId: roleChange.user.id,
-							role: roleChange.role,
-						})
+						roleMutation.mutate({ userId: roleChange.user.id, role: roleChange.role })
 					}
 					title="Ubah Role"
 					message={`Yakin ingin mengubah role ${roleChange.user.name} menjadi ${roleChange.role}?`}
@@ -382,13 +380,22 @@ export default function UsersManagePage() {
 				/>
 			)}
 
+			{/* Delete user confirm */}
+			{deleteConfirm && (
+				<ConfirmModal
+					open
+					onClose={() => setDeleteConfirm(null)}
+					onConfirm={() => deleteMutation.mutate(deleteConfirm.id)}
+					title="Hapus User"
+					message={`Yakin ingin menghapus user "${deleteConfirm.name}"? Semua data terkait (session, router assignments) akan ikut terhapus.`}
+					confirmLabel="Hapus"
+					variant="destructive"
+					isLoading={deleteMutation.isPending}
+				/>
+			)}
+
 			{/* Add user dialog */}
-			<Dialog
-				open={addDialog}
-				onOpenChange={(open) => {
-					if (!open) setAddDialog(false);
-				}}
-			>
+			<Dialog open={addDialog} onOpenChange={(open) => { if (!open) setAddDialog(false); }}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Tambah User Baru</DialogTitle>
@@ -396,56 +403,21 @@ export default function UsersManagePage() {
 					<div className="space-y-4 py-4">
 						<div className="space-y-2">
 							<Label>Nama</Label>
-							<Input
-								value={addForm.name}
-								onChange={(e) =>
-									setAddForm({ ...addForm, name: e.target.value })
-								}
-								placeholder="Nama user"
-							/>
+							<Input value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="Nama user" />
 						</div>
 						<div className="space-y-2">
 							<Label>Email</Label>
-							<Input
-								value={addForm.email}
-								onChange={(e) =>
-									setAddForm({ ...addForm, email: e.target.value })
-								}
-								placeholder="user@example.com"
-								type="email"
-							/>
+							<Input value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} placeholder="user@example.com" type="email" />
 						</div>
 						<div className="space-y-2">
 							<Label>Username (opsional)</Label>
-							<Input
-								value={addForm.username}
-								onChange={(e) =>
-									setAddForm({ ...addForm, username: e.target.value })
-								}
-								placeholder="username"
-							/>
+							<Input value={addForm.username} onChange={(e) => setAddForm({ ...addForm, username: e.target.value })} placeholder="username" />
 						</div>
 						<div className="space-y-2">
 							<Label>Password</Label>
-							<Input
-								value={addForm.password}
-								onChange={(e) =>
-									setAddForm({ ...addForm, password: e.target.value })
-								}
-								type="password"
-								placeholder="Password"
-							/>
+							<Input value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} type="password" placeholder="Password" />
 						</div>
-						<Button
-							className="w-full"
-							onClick={() => addMutation.mutate(addForm)}
-							disabled={
-								addMutation.isPending ||
-								!addForm.name ||
-								!addForm.email ||
-								!addForm.password
-							}
-						>
+						<Button className="w-full" onClick={() => addMutation.mutate(addForm)} disabled={addMutation.isPending || !addForm.name || !addForm.email || !addForm.password}>
 							{addMutation.isPending ? "Menambah..." : "Tambah User"}
 						</Button>
 					</div>
@@ -454,15 +426,7 @@ export default function UsersManagePage() {
 
 			{/* Edit user dialog */}
 			{editDialog && (
-				<Dialog
-					open={!!editDialog}
-					onOpenChange={(open) => {
-						if (!open) {
-							setEditDialog(null);
-							setEditForm(emptyForm);
-						}
-					}}
-				>
+				<Dialog open={!!editDialog} onOpenChange={(open) => { if (!open) { setEditDialog(null); setEditForm(emptyForm); } }}>
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>Edit User — {editDialog.name}</DialogTitle>
@@ -470,56 +434,21 @@ export default function UsersManagePage() {
 						<div className="space-y-4 py-4">
 							<div className="space-y-2">
 								<Label>Nama</Label>
-								<Input
-									value={editForm.name}
-									onChange={(e) =>
-										setEditForm({ ...editForm, name: e.target.value })
-									}
-								/>
+								<Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
 							</div>
 							<div className="space-y-2">
 								<Label>Email</Label>
-								<Input
-									value={editForm.email}
-									onChange={(e) =>
-										setEditForm({ ...editForm, email: e.target.value })
-									}
-									type="email"
-								/>
+								<Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} type="email" />
 							</div>
 							<div className="space-y-2">
 								<Label>Username (kosongkan untuk hapus)</Label>
-								<Input
-									value={editForm.username}
-									onChange={(e) =>
-										setEditForm({ ...editForm, username: e.target.value })
-									}
-									placeholder="username"
-								/>
+								<Input value={editForm.username} onChange={(e) => setEditForm({ ...editForm, username: e.target.value })} placeholder="username" />
 							</div>
 							<div className="space-y-2">
-								<Label>
-									Password (biarkan kosong jika tidak ingin diganti)
-								</Label>
-								<Input
-									value={editForm.password}
-									onChange={(e) =>
-										setEditForm({ ...editForm, password: e.target.value })
-									}
-									type="password"
-									placeholder="Kosongkan jika tidak diganti"
-								/>
+								<Label>Password (biarkan kosong jika tidak ingin diganti)</Label>
+								<Input value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} type="password" placeholder="Kosongkan jika tidak diganti" />
 							</div>
-							<Button
-								className="w-full"
-								onClick={() =>
-									editMutation.mutate({
-										userId: editDialog.id,
-										data: editForm,
-									})
-								}
-								disabled={editMutation.isPending}
-							>
+							<Button className="w-full" onClick={() => editMutation.mutate({ userId: editDialog.id, data: editForm })} disabled={editMutation.isPending}>
 								{editMutation.isPending ? "Menyimpan..." : "Simpan"}
 							</Button>
 						</div>
@@ -529,39 +458,25 @@ export default function UsersManagePage() {
 
 			{/* Assign router dialog */}
 			{assignDialog && (
-				<Dialog
-					open={!!assignDialog}
-					onOpenChange={(open) => {
-						if (!open) setAssignDialog(null);
-					}}
-				>
+				<Dialog open={!!assignDialog} onOpenChange={(open) => { if (!open) setAssignDialog(null); }}>
 					<DialogContent className="max-w-md">
 						<DialogHeader>
 							<DialogTitle>Assign Router — {assignDialog.name}</DialogTitle>
 						</DialogHeader>
 						<div className="space-y-3 py-4">
 							{(allRouters as RouterOption[]).length === 0 ? (
-								<p className="text-sm text-muted-foreground">
-									Tidak ada router.
-								</p>
+								<p className="text-sm text-muted-foreground">Tidak ada router.</p>
 							) : (
 								(allRouters as RouterOption[]).map((r) => {
 									const isAssigned = assignedIds.has(r.id);
 									return (
-										<div
-											key={r.id}
-											className="flex items-center justify-between py-2 border-b last:border-0"
-										>
+										<div key={r.id} className="flex items-center justify-between py-2 border-b last:border-0">
 											<span className="text-sm">{r.name}</span>
 											<Button
 												variant={isAssigned ? "destructive" : "outline"}
 												size="sm"
 												onClick={() => {
-													assignMutation.mutate({
-														userId: assignDialog.id,
-														routerId: r.id,
-														assign: !isAssigned,
-													});
+													assignMutation.mutate({ userId: assignDialog.id, routerId: r.id, assign: !isAssigned });
 													setAssignedIds((prev) => {
 														const next = new Set(prev);
 														if (isAssigned) next.delete(r.id);
@@ -571,15 +486,7 @@ export default function UsersManagePage() {
 												}}
 												disabled={assignMutation.isPending}
 											>
-												{isAssigned ? (
-													<>
-														<X className="mr-1 h-3 w-3" /> Hapus
-													</>
-												) : (
-													<>
-														<Check className="mr-1 h-3 w-3" /> Tambah
-													</>
-												)}
+												{isAssigned ? <><X className="mr-1 h-3 w-3" /> Hapus</> : <><Check className="mr-1 h-3 w-3" /> Tambah</>}
 											</Button>
 										</div>
 									);
