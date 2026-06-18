@@ -23,7 +23,6 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
 	DropdownMenu,
@@ -449,12 +448,10 @@ export default function HotspotUsersPage() {
 								</Button>
 							</>
 						)}
+						<Button onClick={() => setIsAddOpen(true)}>
+							<Plus className="mr-2 h-4 w-4" /> Tambah User
+						</Button>
 						<Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-							<DialogTrigger>
-								<Button>
-									<Plus className="mr-2 h-4 w-4" /> Tambah User
-								</Button>
-							</DialogTrigger>
 							<DialogContent>
 								<DialogHeader>
 									<DialogTitle>Tambah User Hotspot</DialogTitle>

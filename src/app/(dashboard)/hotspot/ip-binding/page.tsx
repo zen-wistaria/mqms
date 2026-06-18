@@ -12,7 +12,6 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -195,12 +194,10 @@ export default function HotspotIpBindingPage() {
 						/>
 					</div>
 
+					<Button onClick={() => setIsAddOpen(true)}>
+						<Plus className="mr-2 h-4 w-4" /> Tambah Binding
+					</Button>
 					<Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-						<DialogTrigger>
-							<Button>
-								<Plus className="mr-2 h-4 w-4" /> Tambah Binding
-							</Button>
-						</DialogTrigger>
 						<DialogContent>
 							<DialogHeader>
 								<DialogTitle>Tambah IP Binding</DialogTitle>
