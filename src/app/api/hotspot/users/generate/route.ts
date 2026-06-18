@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { executeRestCommand } from "@/lib/mikrotik";
+import { requireRouterAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 // Helper to get router config
@@ -38,6 +39,10 @@ export async function POST(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const routerId = searchParams.get("routerId");
+
+		if (!routerId) throw new Error("Router ID is required");
+		await requireRouterAccess(routerId);
+
 		const config = await getRouterConfig(routerId);
 
 		const {
@@ -63,13 +68,11 @@ export async function POST(request: NextRequest) {
 		const count = Number.parseInt(qty, 10);
 		const len = Number.parseInt(length, 10);
 
-		// Define character sets
 		const lower = "abcdefghijklmnopqrstuvwxyz";
 		const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		const num = "0123456789";
 
 		let uChars = "";
-		let pChars = "";
 
 		switch (charType) {
 			case "lower":
@@ -97,9 +100,8 @@ export async function POST(request: NextRequest) {
 				uChars = lower + num;
 		}
 
-		pChars = charType === "num" ? num : uChars;
+		const pChars = charType === "num" ? num : uChars;
 
-		// Generate batch tag (similar to mikhmon)
 		const dateStr = new Date()
 			.toLocaleDateString("en-US", {
 				month: "2-digit",
@@ -125,7 +127,6 @@ export async function POST(request: NextRequest) {
 				uPass = uName;
 			}
 
-			// Build body — only include fields that have values
 			const body: Record<string, string> = {
 				name: uName,
 				password: uPass,
@@ -133,17 +134,14 @@ export async function POST(request: NextRequest) {
 				comment: batchComment,
 			};
 
-			// Server: omit entirely if "all" (RouterOS default behavior)
 			if (server && server !== "all") {
 				body.server = server;
 			}
 
-			// Time limit: only if set
 			if (timeLimit !== "0" && timeLimit !== "") {
 				body["limit-uptime"] = timeLimit;
 			}
 
-			// Data limit: only if set
 			if (dataLimit !== "0" && dataLimit !== "") {
 				body["limit-bytes-total"] = dataLimit;
 			}
@@ -151,7 +149,6 @@ export async function POST(request: NextRequest) {
 			usersToCreate.push(body);
 		}
 
-		// Execute sequentially to avoid overwhelming router + easy error tracking
 		let successes = 0;
 		let failures = 0;
 		const errors: string[] = [];

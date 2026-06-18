@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { executeRestCommand } from "@/lib/mikrotik";
+import { requireRouterAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/queues/live?routerId=xxx — fetch live queues directly from router REST API
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
 				{ status: 400 },
 			);
 		}
+
+		await requireRouterAccess(routerId);
 
 		const router = await prisma.router.findUnique({
 			where: { id: routerId },
@@ -61,7 +64,8 @@ export async function GET(request: NextRequest) {
 			});
 
 		return NextResponse.json(result);
-	} catch (error) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
 		const msg = error instanceof Error ? error.message : "Unknown error";
 		return NextResponse.json({ error: msg }, { status: 500 });
 	}

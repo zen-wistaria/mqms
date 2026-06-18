@@ -1,17 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { executeRestCommand } from "@/lib/mikrotik";
+import { requireRouterAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 async function getRouterConfig(routerId: string | null) {
-	if (!routerId) {
-		throw new Error("Router ID is required");
-	}
-	const router = await prisma.router.findUnique({
-		where: { id: routerId },
-	});
-	if (!router) {
-		throw new Error("Router not found");
-	}
+	if (!routerId) throw new Error("Router ID is required");
+	const router = await prisma.router.findUnique({ where: { id: routerId } });
+	if (!router) throw new Error("Router not found");
 	return {
 		ipAddress: router.ipAddress,
 		port: router.port,
@@ -25,6 +20,9 @@ export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const routerId = searchParams.get("routerId");
+		if (!routerId) throw new Error("Router ID is required");
+
+		await requireRouterAccess(routerId);
 		const config = await getRouterConfig(routerId);
 
 		const result = await executeRestCommand(config, "GET", "/ip/hotspot/host");
@@ -34,10 +32,12 @@ export async function GET(request: NextRequest) {
 		}
 
 		return NextResponse.json(result.data);
-	} catch (error: any) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
+		const msg = error instanceof Error ? error.message : "Unknown error";
 		console.error("Failed to fetch hotspot hosts:", error);
 		return NextResponse.json(
-			{ error: error.message || "Failed to fetch hotspot hosts" },
+			{ error: msg || "Failed to fetch hotspot hosts" },
 			{ status: 500 },
 		);
 	}

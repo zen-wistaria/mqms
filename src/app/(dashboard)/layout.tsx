@@ -9,10 +9,12 @@ import {
 	Network,
 	Router,
 	Settings,
+	Users,
 	Wifi,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -64,6 +66,12 @@ const navItems = [
 		href: "/settings",
 		icon: Settings,
 	},
+	{
+		title: "Users",
+		href: "/users",
+		icon: Users,
+		adminOnly: true,
+	},
 ];
 
 export default function DashboardLayout({
@@ -74,6 +82,19 @@ export default function DashboardLayout({
 	const pathname = usePathname();
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
+	const [isAdmin, setIsAdmin] = useState(false);
+
+	useEffect(() => {
+		if (session?.user) {
+			fetch("/api/users")
+				.then((res) => {
+					if (res.ok) setIsAdmin(true);
+				})
+				.catch(() => setIsAdmin(false));
+		} else {
+			setIsAdmin(false);
+		}
+	}, [session]);
 
 	const handleLogout = async () => {
 		await authClient.signOut();
@@ -110,7 +131,9 @@ export default function DashboardLayout({
 						<SidebarGroupLabel>Navigation</SidebarGroupLabel>
 						<SidebarGroupContent>
 							<SidebarMenu>
-								{navItems.map((item) => (
+								{navItems
+									.filter((item) => !item.adminOnly || isAdmin)
+									.map((item) => (
 									<SidebarMenuItem key={item.href}>
 										<SidebarMenuButton
 											render={<Link href={item.href} />}

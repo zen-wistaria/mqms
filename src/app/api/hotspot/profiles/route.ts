@@ -1,17 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { executeRestCommand } from "@/lib/mikrotik";
+import { requireRouterAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 async function getRouterConfig(routerId: string | null) {
-	if (!routerId) {
-		throw new Error("Router ID is required");
-	}
-	const router = await prisma.router.findUnique({
-		where: { id: routerId },
-	});
-	if (!router) {
-		throw new Error("Router not found");
-	}
+	if (!routerId) throw new Error("Router ID is required");
+	const router = await prisma.router.findUnique({ where: { id: routerId } });
+	if (!router) throw new Error("Router not found");
 	return {
 		ipAddress: router.ipAddress,
 		port: router.port,
@@ -25,12 +20,13 @@ export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const routerId = searchParams.get("routerId");
+		if (!routerId) throw new Error("Router ID is required");
+
+		await requireRouterAccess(routerId);
 		const config = await getRouterConfig(routerId);
 
 		const result = await executeRestCommand(
-			config,
-			"GET",
-			"/ip/hotspot/user/profile",
+			config, "GET", "/ip/hotspot/user/profile",
 		);
 
 		if (!result.success) {
@@ -38,10 +34,12 @@ export async function GET(request: NextRequest) {
 		}
 
 		return NextResponse.json(result.data);
-	} catch (error: any) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
+		const msg = error instanceof Error ? error.message : "Unknown error";
 		console.error("Failed to fetch hotspot profiles:", error);
 		return NextResponse.json(
-			{ error: error.message || "Failed to fetch hotspot profiles" },
+			{ error: msg || "Failed to fetch hotspot profiles" },
 			{ status: 500 },
 		);
 	}
@@ -51,15 +49,15 @@ export async function POST(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const routerId = searchParams.get("routerId");
+		if (!routerId) throw new Error("Router ID is required");
+
+		await requireRouterAccess(routerId);
 		const config = await getRouterConfig(routerId);
 
 		const body = await request.json();
 
 		const result = await executeRestCommand(
-			config,
-			"PUT",
-			"/ip/hotspot/user/profile",
-			body,
+			config, "PUT", "/ip/hotspot/user/profile", body,
 		);
 
 		if (!result.success) {
@@ -67,10 +65,12 @@ export async function POST(request: NextRequest) {
 		}
 
 		return NextResponse.json(result.data);
-	} catch (error: any) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
+		const msg = error instanceof Error ? error.message : "Unknown error";
 		console.error("Failed to create hotspot profile:", error);
 		return NextResponse.json(
-			{ error: error.message || "Failed to create hotspot profile" },
+			{ error: msg || "Failed to create hotspot profile" },
 			{ status: 500 },
 		);
 	}

@@ -1,18 +1,31 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getAccessibleRouterIdsOrThrow } from "@/lib/permissions";
 import { serializeBigInt } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/queues — List all queues
+// GET /api/queues — List all queues (filtered by accessible routers)
 export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
-		const routerId = searchParams.get("routerId");
+		const routerIdParam = searchParams.get("routerId");
 		const showDeleted = searchParams.get("showDeleted") === "true";
-
 		const filter = searchParams.get("filter") || "total";
 
+		const { user, routerIds } = await getAccessibleRouterIdsOrThrow();
+
 		const where: Record<string, unknown> = {};
-		if (routerId && routerId !== "all") where.routerId = routerId;
+
+		// If specific routerId requested, check access
+		if (routerIdParam && routerIdParam !== "all") {
+			if (!routerIds.includes(routerIdParam)) {
+				return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+			}
+			where.routerId = routerIdParam;
+		} else if (user.role !== "admin") {
+			// Non-admin: only show queues from accessible routers
+			where.routerId = { in: routerIds };
+		}
+
 		if (!showDeleted) where.isDeleted = false;
 
 		const queues = await prisma.queue.findMany({
@@ -98,7 +111,6 @@ export async function GET(request: NextRequest) {
 					rateUpload = lastRec.rateUpload;
 					rateDownload = lastRec.rateDownload;
 				} else if (records.length === 1) {
-					// Fallback if only 1 record exists in that month (rare but possible)
 					const lastRec = records[0];
 					rateUpload = lastRec.rateUpload;
 					rateDownload = lastRec.rateDownload;
@@ -116,7 +128,8 @@ export async function GET(request: NextRequest) {
 		}
 
 		return NextResponse.json(serializeBigInt(result));
-	} catch (error) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
 		console.error("Failed to fetch queues:", error);
 		return NextResponse.json(
 			{ error: "Failed to fetch queues" },

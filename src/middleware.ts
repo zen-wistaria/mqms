@@ -20,6 +20,17 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.redirect(loginUrl);
 	}
 
+	// Protected admin routes — middleware redirects to login,
+	// server-side API/component will enforce 403 if role isn't admin
+	const adminPaths = ["/settings/users"];
+	const isAdminPath = adminPaths.some((path) => pathname.startsWith(path));
+
+	if (isAdminPath) {
+		// We can't check role here without DB call in middleware,
+		// so the page component will handle role validation.
+		// But we still need session check done above.
+	}
+
 	return NextResponse.next();
 }
 

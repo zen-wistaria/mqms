@@ -2,16 +2,19 @@ import { type NextRequest, NextResponse } from "next/server";
 import { encrypt } from "@/lib/encryption";
 import { serializeBigInt } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { requireRouterAccess, requireRole } from "@/lib/permissions";
 import { routerUpdateSchema } from "@/lib/validations/router";
 
 interface RouteParams {
 	params: Promise<{ id: string }>;
 }
 
-// GET /api/routers/:id — Get router details
+// GET /api/routers/:id — Get router details (user must have access)
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	try {
 		const { id } = await params;
+		await requireRouterAccess(id);
+
 		const router = await prisma.router.findUnique({
 			where: { id },
 			include: {
@@ -30,12 +33,16 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 		});
 
 		if (!router) {
-			return NextResponse.json({ error: "Router not found" }, { status: 404 });
+			return NextResponse.json(
+				{ error: "Router not found" },
+				{ status: 404 },
+			);
 		}
 
 		const { password: _, ...safeRouter } = router;
 		return NextResponse.json(serializeBigInt(safeRouter));
-	} catch (error) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
 		console.error("Failed to fetch router:", error);
 		return NextResponse.json(
 			{ error: "Failed to fetch router" },
@@ -44,9 +51,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 	}
 }
 
-// PUT /api/routers/:id — Update router
+// PUT /api/routers/:id — Update router (admin only)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
 	try {
+		await requireRole("admin");
 		const { id } = await params;
 		const body = await request.json();
 		const parsed = routerUpdateSchema.safeParse(body);
@@ -72,7 +80,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 		const { password: _, ...safeRouter } = router;
 		return NextResponse.json(serializeBigInt(safeRouter));
-	} catch (error) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
 		console.error("Failed to update router:", error);
 		return NextResponse.json(
 			{ error: "Failed to update router" },
@@ -81,9 +90,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 	}
 }
 
-// DELETE /api/routers/:id — Delete router and all related data
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+// DELETE /api/routers/:id — Delete router (admin only)
+export async function DELETE(
+	_request: NextRequest,
+	{ params }: RouteParams,
+) {
 	try {
+		await requireRole("admin");
 		const { id } = await params;
 
 		await prisma.router.delete({
@@ -91,7 +104,8 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 		});
 
 		return NextResponse.json({ success: true });
-	} catch (error) {
+	} catch (error: unknown) {
+		if (error instanceof Response) return error;
 		console.error("Failed to delete router:", error);
 		return NextResponse.json(
 			{ error: "Failed to delete router" },
