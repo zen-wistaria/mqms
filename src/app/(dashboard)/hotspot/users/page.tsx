@@ -302,6 +302,7 @@ export default function HotspotUsersPage() {
 			title: "Hotspot Voucher",
 			batchComment: comment,
 			showPassword: true,
+			showQR: false,
 		});
 		setShowPrint(true);
 	};
@@ -327,6 +328,7 @@ export default function HotspotUsersPage() {
 			})),
 			title: "Hotspot Voucher",
 			showPassword: true,
+			showQR: false,
 		});
 		setShowPrint(true);
 	};

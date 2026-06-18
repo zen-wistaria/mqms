@@ -127,6 +127,7 @@ export default function HotspotBatchPage() {
 			title: "Hotspot Voucher",
 			batchComment: comment,
 			showPassword: true,
+			showQR: false,
 		});
 		setShowPrint(true);
 	};

@@ -147,6 +147,7 @@ export default function HotspotGeneratePage() {
 							subtitle: form.profile,
 							batchComment: data.batchComment,
 							showPassword: true,
+							showQR: false,
 						});
 						setShowPrint(true);
 					}
