@@ -9,6 +9,7 @@ import {
 	Network,
 	Router,
 	Settings,
+	Wifi,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -52,6 +53,11 @@ const navItems = [
 		title: "Queues",
 		href: "/queues",
 		icon: BarChart3,
+	},
+	{
+		title: "Hotspot",
+		href: "/hotspot",
+		icon: Wifi,
 	},
 	{
 		title: "Settings",
