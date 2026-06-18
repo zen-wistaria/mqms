@@ -1,7 +1,18 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Printer, Search, Trash2, Plus, X } from "lucide-react";
+import {
+	CheckCircle2,
+	MoreHorizontal,
+	Plus,
+	Printer,
+	RotateCcw,
+	Search,
+	TimerReset,
+	Trash2,
+	X,
+	XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +25,12 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
 	Select,
 	SelectContent,
@@ -59,9 +76,10 @@ export default function HotspotUsersPage() {
 
 	// Confirm modal
 	const [confirm, setConfirm] = useState<{
-		type: "delete" | "deleteSelected";
+		type: "delete" | "deleteSelected" | "batchAction";
 		userId?: string;
 		userName?: string;
+		actionName?: string;
 	} | null>(null);
 
 	const [newUser, setNewUser] = useState({
@@ -102,6 +120,81 @@ export default function HotspotUsersPage() {
 			return res.json();
 		},
 		enabled: !!routerId,
+	});
+
+	const userActionMutation = useMutation({
+		mutationFn: async ({
+			id,
+			action,
+		}: {
+			id: string;
+			action: string;
+			name: string;
+		}) => {
+			const res = await fetch(
+				`/api/hotspot/users/${encodeURIComponent(id)}?routerId=${routerId}&action=${action}`,
+				{ method: "PATCH" },
+			);
+			if (!res.ok) {
+				const d = await res.json();
+				throw new Error(d.error || `Failed to ${action} user`);
+			}
+			return res.json();
+		},
+		onSuccess: (data) => {
+			const labels: Record<string, string> = {
+				enabled: "User diaktifkan",
+				disabled: "User dinonaktifkan",
+				"counters-reset": "Counter direset",
+				"uptime-reset": "Uptime direset (session diputus)",
+			};
+			toast.success(labels[data.action] || `Action ${data.action} berhasil`);
+			queryClient.invalidateQueries({ queryKey: ["hotspotUsers", routerId] });
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Gagal");
+		},
+	});
+
+	const batchActionMutation = useMutation({
+		mutationFn: async ({
+			ids,
+			action,
+		}: {
+			ids: string[];
+			action: string;
+		}) => {
+			const results = await Promise.allSettled(
+				ids.map((id) =>
+					fetch(
+						`/api/hotspot/users/${encodeURIComponent(id)}?routerId=${routerId}&action=${action}`,
+						{ method: "PATCH" },
+					),
+				),
+			);
+			const failed = results.filter((r) => r.status === "rejected").length;
+			const succeeded = ids.length - failed;
+			return { succeeded, failed, action };
+		},
+		onSuccess: (res) => {
+			const labels: Record<string, string> = {
+				enable: "diaktifkan",
+				disable: "dinonaktifkan",
+				"reset-counters": "di-reset counternya",
+				"reset-uptime": "di-reset uptime-nya",
+			};
+			const label = labels[res.action] || res.action;
+			toast.success(
+				`${res.succeeded} user ${label}${res.failed > 0 ? `, ${res.failed} gagal` : ""}`,
+			);
+			clearSelection();
+			queryClient.invalidateQueries({ queryKey: ["hotspotUsers", routerId] });
+			setConfirm(null);
+		},
+		onError: () => {
+			toast.error("Gagal");
+			setConfirm(null);
+		},
 	});
 
 	const deleteMutation = useMutation({
@@ -262,7 +355,10 @@ export default function HotspotUsersPage() {
 						</div>
 						{batchComments.length > 0 && (
 							<div className="min-w-[180px]">
-								<Select value={batchFilter} onValueChange={(v) => setBatchFilter(v ?? "")}>
+								<Select
+									value={batchFilter}
+									onValueChange={(v) => setBatchFilter(v ?? "")}
+								>
 									<SelectTrigger>
 										<SelectValue>
 											{batchFilter ? batchFilter : "Semua Batch"}
@@ -285,13 +381,50 @@ export default function HotspotUsersPage() {
 						{selected.size > 0 && (
 							<>
 								<Button
+									variant="outline"
+									size="sm"
+									onClick={() =>
+										setConfirm({
+											type: "batchAction",
+											actionName: "enable",
+										})
+									}
+								>
+									<CheckCircle2 className="mr-1 h-4 w-4 text-green-500" />
+									Enable ({selected.size})
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() =>
+										setConfirm({
+											type: "batchAction",
+											actionName: "disable",
+										})
+									}
+								>
+									<XCircle className="mr-1 h-4 w-4 text-orange-500" />
+									Disable ({selected.size})
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() =>
+										setConfirm({
+											type: "batchAction",
+											actionName: "reset-counters",
+										})
+									}
+								>
+									<RotateCcw className="mr-1 h-4 w-4" />
+									Reset ({selected.size})
+								</Button>
+								<Button
 									variant="destructive"
 									size="sm"
-									onClick={() => {
-										setConfirm({
-											type: "deleteSelected",
-										});
-									}}
+									onClick={() =>
+										setConfirm({ type: "deleteSelected" })
+									}
 								>
 									<Trash2 className="mr-1 h-4 w-4" />
 									Hapus ({selected.size})
@@ -304,7 +437,11 @@ export default function HotspotUsersPage() {
 									<Printer className="mr-1 h-4 w-4" />
 									Print ({selected.size})
 								</Button>
-								<Button variant="ghost" size="sm" onClick={clearSelection}>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={clearSelection}
+								>
 									<X className="mr-1 h-4 w-4" />
 									Batal
 								</Button>
@@ -422,13 +559,16 @@ export default function HotspotUsersPage() {
 											if (selected.size === filteredUsers.length) {
 												clearSelection();
 											} else {
-												selectAll(filteredUsers.map((u: any) => u[".id"]));
+												selectAll(
+													filteredUsers.map((u: any) => u[".id"]),
+												);
 											}
 										}}
 									/>
 								</TableHead>
 								<TableHead>Username</TableHead>
 								<TableHead>Profile</TableHead>
+								<TableHead>Status</TableHead>
 								<TableHead>Uptime</TableHead>
 								<TableHead>Bytes In/Out</TableHead>
 								<TableHead>Comment</TableHead>
@@ -438,14 +578,14 @@ export default function HotspotUsersPage() {
 						<TableBody>
 							{isLoading ? (
 								<TableRow>
-									<TableCell colSpan={7} className="text-center py-8">
+									<TableCell colSpan={8} className="text-center py-8">
 										Loading users...
 									</TableCell>
 								</TableRow>
 							) : filteredUsers.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={7}
+										colSpan={8}
 										className="text-center py-8 text-muted-foreground"
 									>
 										Tidak ada user.
@@ -475,6 +615,18 @@ export default function HotspotUsersPage() {
 													{user.profile || "default"}
 												</Badge>
 											</TableCell>
+											<TableCell>
+												{user.disabled === "true" ? (
+													<Badge variant="secondary">Disabled</Badge>
+												) : (
+													<Badge
+														variant="outline"
+														className="border-green-500/30 text-green-500"
+													>
+														Active
+													</Badge>
+												)}
+											</TableCell>
 											<TableCell>{user.uptime || "0s"}</TableCell>
 											<TableCell className="text-xs text-muted-foreground">
 												{formatBytes(Number(user["bytes-in"]) || 0)} /{" "}
@@ -484,19 +636,82 @@ export default function HotspotUsersPage() {
 												{user.comment}
 											</TableCell>
 											<TableCell>
-												<Button
-													variant="ghost"
-													size="icon"
-													onClick={() =>
-														setConfirm({
-															type: "delete",
-															userId: user[".id"],
-															userName: user.name,
-														})
-													}
-												>
-													<Trash2 className="h-4 w-4 text-destructive" />
-												</Button>
+												<DropdownMenu>
+													<DropdownMenuTrigger>
+														<Button variant="ghost" size="icon">
+															<MoreHorizontal className="h-4 w-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent
+														align="end"
+														className="w-48"
+													>
+														{user.disabled === "true" ? (
+															<DropdownMenuItem
+																onClick={() =>
+																	userActionMutation.mutate({
+																		id: user[".id"],
+																		action: "enable",
+																		name: user.name,
+																	})
+																}
+															>
+																<CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+																Enable
+															</DropdownMenuItem>
+														) : (
+															<DropdownMenuItem
+																onClick={() =>
+																	userActionMutation.mutate({
+																		id: user[".id"],
+																		action: "disable",
+																		name: user.name,
+																	})
+																}
+															>
+																<XCircle className="mr-2 h-4 w-4 text-orange-500" />
+																Disable
+															</DropdownMenuItem>
+														)}
+														<DropdownMenuItem
+															onClick={() =>
+																userActionMutation.mutate({
+																	id: user[".id"],
+																	action: "reset-counters",
+																	name: user.name,
+																})
+															}
+														>
+															<RotateCcw className="mr-2 h-4 w-4" />
+															Reset Counter
+														</DropdownMenuItem>
+														<DropdownMenuItem
+															onClick={() =>
+																userActionMutation.mutate({
+																	id: user[".id"],
+																	action: "reset-uptime",
+																	name: user.name,
+																})
+															}
+														>
+															<TimerReset className="mr-2 h-4 w-4" />
+															Reset Uptime
+														</DropdownMenuItem>
+														<DropdownMenuItem
+															className="text-destructive focus:text-destructive"
+															onClick={() =>
+																setConfirm({
+																	type: "delete",
+																	userId: user[".id"],
+																	userName: user.name,
+																})
+															}
+														>
+															<Trash2 className="mr-2 h-4 w-4" />
+															Hapus
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
 											</TableCell>
 										</TableRow>
 									);
@@ -509,7 +724,8 @@ export default function HotspotUsersPage() {
 				{!isLoading && (
 					<div className="text-xs text-muted-foreground">
 						Total: {(users as any[]).length} user
-						{selected.size > 0 && ` | ${selected.size} dipilih`}
+						{selected.size > 0 &&
+							` | ${selected.size} dipilih`}
 					</div>
 				)}
 			</div>
@@ -525,6 +741,24 @@ export default function HotspotUsersPage() {
 					confirmLabel="Hapus"
 					variant="destructive"
 					isLoading={deleteMutation.isPending}
+				/>
+			)}
+
+			{confirm?.type === "batchAction" && confirm.actionName && (
+				<ConfirmModal
+					open
+					onClose={() => setConfirm(null)}
+					onConfirm={() =>
+						batchActionMutation.mutate({
+							ids: Array.from(selected),
+							action: confirm.actionName!,
+						})
+					}
+					title="Konfirmasi Batch Action"
+					message={`Yakin ingin ${confirm.actionName === "enable" ? "mengaktifkan" : confirm.actionName === "disable" ? "menonaktifkan" : "mereset counter"} ${selected.size} user?`}
+					confirmLabel="Ya, jalankan"
+					variant="default"
+					isLoading={batchActionMutation.isPending}
 				/>
 			)}
 
