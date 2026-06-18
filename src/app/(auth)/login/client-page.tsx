@@ -20,7 +20,7 @@ import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
 	const router = useRouter();
-	const [email, setEmail] = useState("");
+	const [login, setLogin] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -30,10 +30,21 @@ export default function LoginPage() {
 		setIsLoading(true);
 
 		try {
-			const result = await authClient.signIn.email({
-				email,
-				password,
-			});
+			// Determine if input is email or username
+			const isEmail = login.includes("@");
+
+			let result;
+			if (isEmail) {
+				result = await authClient.signIn.email({
+					email: login,
+					password,
+				});
+			} else {
+				result = await authClient.signIn.username({
+					username: login,
+					password,
+				});
+			}
 
 			if (result.error) {
 				toast.error(result.error.message || "Login failed");
@@ -52,14 +63,12 @@ export default function LoginPage() {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background relative overflow-hidden">
-			{/* Animated background */}
 			<div className="absolute inset-0 overflow-hidden">
 				<div className="absolute -top-1/2 -left-1/2 w-full h-full bg-linear-to-br from-primary/5 via-transparent to-transparent rounded-full blur-3xl animate-pulse" />
 				<div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-linear-to-tl from-chart-2/5 via-transparent to-transparent rounded-full blur-3xl animate-pulse delay-1000" />
 			</div>
 
 			<div className="relative z-10 w-full max-w-md px-4">
-				{/* Logo Section */}
 				<div className="flex flex-col items-center mb-8">
 					<div className="flex items-center gap-2 mb-2">
 						<div className="relative">
@@ -79,21 +88,21 @@ export default function LoginPage() {
 							Welcome Back
 						</CardTitle>
 						<CardDescription className="text-center">
-							Sign in to your account to continue
+							Sign in with email or username
 						</CardDescription>
 					</CardHeader>
 					<form onSubmit={handleLogin}>
 						<CardContent className="space-y-4 pb-5">
 							<div className="space-y-2">
-								<Label htmlFor="email">Email</Label>
+								<Label htmlFor="login">Email or Username</Label>
 								<Input
-									id="email"
-									type="email"
-									placeholder="admin@example.com"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
+									id="login"
+									type="text"
+									placeholder="admin@example.com or admin"
+									value={login}
+									onChange={(e) => setLogin(e.target.value)}
 									required
-									autoComplete="email"
+									autoComplete="username"
 									className="bg-background/50"
 								/>
 							</div>

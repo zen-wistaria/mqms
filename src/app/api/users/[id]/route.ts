@@ -11,17 +11,16 @@ export async function PATCH(
 	try {
 		await requireRole("admin");
 		const { id } = await params;
-		const { name, email, password } = await request.json();
+		const { name, email, username, password } = await request.json();
 
 		const user = await prisma.user.findUnique({ where: { id } });
 		if (!user) {
 			return NextResponse.json({ error: "User not found" }, { status: 404 });
 		}
 
-		const updateData: Record<string, string> = {};
+		const updateData: Record<string, string | null> = {};
 		if (name?.trim()) updateData.name = name.trim();
 		if (email?.trim()) {
-			// Check email uniqueness
 			const existing = await prisma.user.findUnique({
 				where: { email: email.trim() },
 			});
@@ -32,6 +31,21 @@ export async function PATCH(
 				);
 			}
 			updateData.email = email.trim();
+		}
+		if (username !== undefined) {
+			const val = username?.trim() || null;
+			if (val) {
+				const existing = await prisma.user.findUnique({
+					where: { username: val },
+				});
+				if (existing && existing.id !== id) {
+					return NextResponse.json(
+						{ error: "Username already in use" },
+						{ status: 409 },
+					);
+				}
+			}
+			updateData.username = val;
 		}
 
 		if (Object.keys(updateData).length > 0) {

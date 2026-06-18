@@ -14,6 +14,7 @@ export async function GET() {
 				id: true,
 				name: true,
 				email: true,
+				username: true,
 				role: true,
 				createdAt: true,
 				_count: { select: { assignedRouters: true } },
@@ -32,7 +33,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
 	try {
 		await requireRole("admin");
-		const { name, email, password } = await request.json();
+		const { name, email, password, username } = await request.json();
 
 		if (!name?.trim() || !email?.trim() || !password?.trim()) {
 			return NextResponse.json(
@@ -42,14 +43,27 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Check existing email
-		const existing = await prisma.user.findUnique({
+		const existingEmail = await prisma.user.findUnique({
 			where: { email: email.trim() },
 		});
-		if (existing) {
+		if (existingEmail) {
 			return NextResponse.json(
 				{ error: "Email already in use" },
 				{ status: 409 },
 			);
+		}
+
+		// Check existing username
+		if (username?.trim()) {
+			const existingUser = await prisma.user.findUnique({
+				where: { username: username.trim() },
+			});
+			if (existingUser) {
+				return NextResponse.json(
+					{ error: "Username already in use" },
+					{ status: 409 },
+				);
+			}
 		}
 
 		// Create user + account record for better-auth
@@ -57,6 +71,7 @@ export async function POST(request: NextRequest) {
 			data: {
 				name: name.trim(),
 				email: email.trim(),
+				username: username?.trim() || null,
 				role: "user",
 			},
 		});
@@ -73,7 +88,13 @@ export async function POST(request: NextRequest) {
 		});
 
 		return NextResponse.json(
-			{ id: user.id, name: user.name, email: user.email, role: user.role },
+			{
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				username: user.username,
+				role: user.role,
+			},
 			{ status: 201 },
 		);
 	} catch (error: unknown) {
