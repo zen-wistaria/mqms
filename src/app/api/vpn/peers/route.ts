@@ -25,8 +25,6 @@ export async function GET() {
 				transferRx: p.transferRx.toString(),
 				transferTx: p.transferTx.toString(),
 				latestHandshakeAt: p.latestHandshakeAt?.toISOString() || null,
-				// Don't expose privateKey to client
-				privateKey: undefined,
 			})),
 		);
 	} catch (error: unknown) {
