@@ -11,8 +11,11 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// Check for session cookie
-	const sessionToken = request.cookies.get("better-auth.session_token")?.value;
+	// Check for session cookie (with or without __Host- prefix)
+	const sessionToken =
+		request.cookies.get("__Host-better-auth.session_token")?.value ||
+		request.cookies.get("__Secure-better-auth.session_token")?.value ||
+		request.cookies.get("better-auth.session_token")?.value;
 
 	if (!sessionToken) {
 		const loginUrl = new URL("/login", request.url);
