@@ -64,10 +64,13 @@ COPY --from=builder /app/seed.js ./seed.js
 
 RUN mkdir -p /app/data /etc/wireguard
 
+COPY start.sh .
+RUN chmod +x start.sh
+
 EXPOSE 3000
 EXPOSE 51820/udp
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["bun", "server.js"]
+CMD ["./start.sh"]

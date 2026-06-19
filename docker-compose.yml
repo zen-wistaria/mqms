@@ -12,6 +12,8 @@ services:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - POLLING_INTERVAL_MS=${POLLING_INTERVAL_MS:-60000}
+      - SYNC_INTERVAL_MS=${SYNC_INTERVAL_MS:-300000}
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -26,19 +28,6 @@ services:
     command: ["bun", "db:migrate"]
     volumes:
       - db_data:/app/data
-
-  worker:
-    image: mqms:latest
-    command: ["bun", "worker.js"]
-    volumes:
-      - db_data:/app/data
-    environment:
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - POLLING_INTERVAL_MS=${POLLING_INTERVAL_MS:-60000}
-      - SYNC_INTERVAL_MS=${SYNC_INTERVAL_MS:-300000}
-    depends_on:
-      - migrate
-    restart: unless-stopped
 
 volumes:
   db_data:
