@@ -2,6 +2,8 @@ import { usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-	baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+	baseURL:
+		process.env.BETTER_AUTH_URL ||
+		(typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"),
 	plugins: [usernameClient()],
 });
