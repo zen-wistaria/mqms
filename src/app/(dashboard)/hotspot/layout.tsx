@@ -20,6 +20,9 @@ const hotspotNav = [
 	{ name: "Batch", href: "/hotspot/batch" },
 	{ name: "IP Binding", href: "/hotspot/ip-binding" },
 	{ name: "Profiles", href: "/hotspot/profiles" },
+	{ name: "Revenue", href: "/hotspot/revenue" },
+	{ name: "Scripts", href: "/hotspot/scripts" },
+	{ name: "Logs", href: "/hotspot/logs" },
 ];
 
 export default function HotspotLayout({

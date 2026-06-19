@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Printer } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,7 @@ export default function HotspotGeneratePage() {
 		dataLimit: "",
 		mbgb: "1048576",
 		adcomment: "",
+		price: "", // Harga jual voucher
 	});
 
 	useEffect(() => {
@@ -87,6 +88,37 @@ export default function HotspotGeneratePage() {
 		},
 		enabled: !!routerId,
 	});
+
+	const { data: localProfiles = [] } = useQuery({
+		queryKey: ["hotspotProfilesLocal", routerId],
+		queryFn: async () => {
+			const res = await fetch(
+				`/api/hotspot/profiles/local?routerId=${routerId}`,
+			);
+			if (!res.ok) return [];
+			return res.json();
+		},
+		enabled: !!routerId,
+	});
+
+	// Auto-fill sell price from local profile when profile changes
+	const selectedLocalProfile = (localProfiles as any[]).find(
+		(p: any) => p.name === form.profile,
+	);
+	const prevProfileRef = useRef(form.profile);
+	useEffect(() => {
+		if (
+			selectedLocalProfile &&
+			selectedLocalProfile.sellPrice > 0 &&
+			form.profile !== prevProfileRef.current
+		) {
+			prevProfileRef.current = form.profile;
+			setForm((prev) => ({
+				...prev,
+				price: String(selectedLocalProfile.sellPrice),
+			}));
+		}
+	}, [form.profile, selectedLocalProfile]);
 
 	const handleGenerate = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -117,7 +149,11 @@ export default function HotspotGeneratePage() {
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error || "Gagal generate voucher");
 
-			toast.success(data.message);
+			toast.success(
+				data.totalPrice > 0
+					? `${data.message} — Total: Rp ${(data.totalPrice || 0).toLocaleString("id-ID")}`
+					: data.message,
+			);
 
 			// Prepare print data — fetch generated users by batch comment
 			if (data.batchComment) {
@@ -308,6 +344,35 @@ export default function HotspotGeneratePage() {
 										)}
 									</SelectContent>
 								</Select>
+							</div>
+
+							{/* Price field */}
+							<div className="space-y-2">
+								<Label>Harga Jual (Rp)</Label>
+								<div className="flex gap-2">
+									<Input
+										type="number"
+										min="0"
+										placeholder={
+											selectedLocalProfile
+												? `Auto: ${selectedLocalProfile.sellPrice}`
+												: "Harga voucher"
+										}
+										value={form.price}
+										onChange={(e) =>
+											setForm({ ...form, price: e.target.value })
+										}
+									/>
+								</div>
+								{selectedLocalProfile && (
+									<p className="text-xs text-muted-foreground">
+										Dari profile: Rp{" "}
+										{selectedLocalProfile.sellPrice.toLocaleString("id-ID")}
+										{selectedLocalProfile.validity &&
+											` | ${selectedLocalProfile.validity}`}
+										{selectedLocalProfile.lockUser && " | Lock"}
+									</p>
+								)}
 							</div>
 
 							<div className="grid grid-cols-2 gap-4">

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { executeRestCommand } from "@/lib/mikrotik";
 import { requireRouterAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { formatValidityForRouterOS } from "@/lib/format";
 
 // Helper to get router config
 async function getRouterConfig(routerId: string | null) {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
 			timeLimit = "0",
 			dataLimit = "0",
 			adcomment = "",
+			price,
 		} = await request.json();
 
 		if (!qty || !profile || !userMode || !length || !charType) {
@@ -67,6 +69,20 @@ export async function POST(request: NextRequest) {
 
 		const count = Number.parseInt(qty, 10);
 		const len = Number.parseInt(length, 10);
+
+		// Resolve profile metadata for lockUser, validity, sellPrice
+		const profileMeta = await prisma.hotspotProfile.findUnique({
+			where: {
+				routerId_name: {
+					routerId,
+					name: profile,
+				},
+			},
+		});
+
+		const lockUser = profileMeta?.lockUser ?? false;
+		const validity = profileMeta?.validity ?? "";
+		const sellPrice = Number(price) || (profileMeta?.sellPrice ?? 0);
 
 		const lower = "abcdefghijklmnopqrstuvwxyz";
 		const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -110,9 +126,24 @@ export async function POST(request: NextRequest) {
 			})
 			.replace(/\//g, ".");
 		const randTag = Math.floor(100 + Math.random() * 900);
-		const batchComment = `${userMode}-${randTag}-${dateStr}-${adcomment}`;
+		const priceSuffix = sellPrice > 0 ? `-${sellPrice}` : "";
+		const batchComment = `${userMode}-${randTag}-${dateStr}${adcomment ? `-${adcomment}` : ""}${priceSuffix}`;
+
+		// Resolve time limit: use validity from profile if timeLimit not explicitly set
+		const resolvedTimeLimit =
+			timeLimit && timeLimit !== "0"
+				? timeLimit
+				: formatValidityForRouterOS(validity);
 
 		const usersToCreate = [];
+		const transactions: Array<{
+			routerId: string;
+			username: string;
+			profileName: string;
+			price: number;
+			batchComment: string;
+			recordedBy: string;
+		}> = [];
 
 		for (let i = 0; i < count; i++) {
 			let uName = "";
@@ -127,7 +158,7 @@ export async function POST(request: NextRequest) {
 				uPass = uName;
 			}
 
-			const body: Record<string, string> = {
+			const body: Record<string, string | number> = {
 				name: uName,
 				password: uPass,
 				profile,
@@ -138,15 +169,31 @@ export async function POST(request: NextRequest) {
 				body.server = server;
 			}
 
-			if (timeLimit !== "0" && timeLimit !== "") {
-				body["limit-uptime"] = timeLimit;
+			if (resolvedTimeLimit) {
+				body["limit-uptime"] = resolvedTimeLimit;
 			}
 
 			if (dataLimit !== "0" && dataLimit !== "") {
 				body["limit-bytes-total"] = dataLimit;
 			}
 
+			if (lockUser) {
+				body["limit-user"] = "1";
+			}
+
 			usersToCreate.push(body);
+
+			// Prepare transaction record
+			if (sellPrice > 0) {
+				transactions.push({
+					routerId,
+					username: uName,
+					profileName: profile,
+					price: sellPrice,
+					batchComment,
+					recordedBy: "generate",
+				});
+			}
 		}
 
 		let successes = 0;
@@ -172,10 +219,22 @@ export async function POST(request: NextRequest) {
 			}
 		}
 
+		// Save transaction records for successfully created users
+		if (sellPrice > 0 && transactions.length > 0) {
+			const successfulTransactions = transactions.slice(0, successes);
+			if (successfulTransactions.length > 0) {
+				await prisma.hotspotTransaction.createMany({
+					data: successfulTransactions,
+				});
+			}
+		}
+
 		return NextResponse.json({
 			success: true,
 			message: `Generated ${successes} users. ${failures > 0 ? `Failed: ${failures}. ${errors[0] || ""}` : ""}`,
 			batchComment,
+			totalPrice: sellPrice * successes,
+			transactionCount: successes,
 		});
 	} catch (error) {
 		const msg = error instanceof Error ? error.message : "Unknown error";

@@ -203,3 +203,76 @@ model WireguardPeer {
 
   @@map("wireguard_peers")
 }
+
+// ============================================
+// Hotspot — Profile Metadata (Mikhmon-style)
+// ============================================
+
+model HotspotProfile {
+  id             String   @id @default(cuid())
+  name           String
+  routerId       String
+  sharedUsers    Int      @default(1)
+  rateLimit      String?
+  addressPool    String?
+  macCookie      Boolean  @default(false)
+  server         String   @default("all")
+  expiredMode    String   @default("remove") // remove | notice | remove_record | notice_record
+  price          Int      @default(0)
+  sellPrice      Int      @default(0)
+  lockUser       Boolean  @default(false)
+  validity       String   @default("")
+  onLoginScript  String?
+  onLogoutScript String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([routerId, name])
+  @@map("hotspot_profiles")
+}
+
+model HotspotTransaction {
+  id           String    @id @default(cuid())
+  routerId     String
+  username     String
+  profileName  String
+  price        Int       @default(0)
+  batchComment String?
+  soldAt       DateTime  @default(now())
+  recordedBy   String?   // auto | generate | scheduler | manual
+  expiresAt    DateTime?
+  status       String    @default("active") // active | expired | removed
+
+  @@map("hotspot_transactions")
+}
+
+model HotspotRouterScript {
+  id        String   @id @default(cuid())
+  routerId  String
+  type      String   // on-login | on-logout
+  name      String
+  content   String
+  deployed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([routerId, type, name])
+  @@map("hotspot_router_scripts")
+}
+
+model HotspotActivityLog {
+  id          String   @id @default(cuid())
+  routerId    String
+  username    String
+  ipAddress   String?
+  macAddress  String?
+  profileName String?
+  validity    String?
+  type        String   // login | logout
+  message     String?
+  loggedAt    DateTime @default(now())
+
+  @@index([routerId, loggedAt])
+  @@index([username])
+  @@map("hotspot_activity_logs")
+}

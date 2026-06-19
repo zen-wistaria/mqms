@@ -80,3 +80,63 @@ export function serializeBigInt<T>(obj: T): T {
 		),
 	) as T;
 }
+
+/**
+ * Parse Mikhmon-format validity string into total minutes.
+ * Supports: "30d", "12h", "5h30m", "1d12h", "45m", "2w", etc.
+ * Returns 0 for invalid/empty input.
+ */
+export function parseValidityToMinutes(input: string): number {
+	if (!input) return 0;
+
+	let totalMinutes = 0;
+	// Match number + unit segments: 30d, 12h, 5h30m, 2w
+	const regex = /(\d+)\s*([wdhm])/gi;
+	let match;
+	let found = false;
+
+	while ((match = regex.exec(input)) !== null) {
+		found = true;
+		const value = Number.parseInt(match[1], 10);
+		const unit = match[2].toLowerCase();
+
+		switch (unit) {
+			case "w":
+				totalMinutes += value * 7 * 24 * 60;
+				break;
+			case "d":
+				totalMinutes += value * 24 * 60;
+				break;
+			case "h":
+				totalMinutes += value * 60;
+				break;
+			case "m":
+				totalMinutes += value;
+				break;
+		}
+	}
+
+	return found ? totalMinutes : 0;
+}
+
+/**
+ * Convert validity from Mikhmon format to RouterOS limit-uptime format.
+ * Examples: "5h30m" → "330m", "30d" → "30d", "12h" → "12h"
+ * RouterOS natively supports: Xs, Xm, Xh, Xd, Xw
+ */
+export function formatValidityForRouterOS(input: string): string {
+	const minutes = parseValidityToMinutes(input);
+	if (minutes <= 0) return "";
+
+	// Use the most appropriate unit
+	if (minutes % (60 * 24 * 7) === 0) {
+		return `${minutes / (60 * 24 * 7)}w`;
+	}
+	if (minutes % (60 * 24) === 0) {
+		return `${minutes / (60 * 24)}d`;
+	}
+	if (minutes % 60 === 0) {
+		return `${minutes / 60}h`;
+	}
+	return `${minutes}m`;
+}
