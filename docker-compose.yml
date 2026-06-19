@@ -5,9 +5,9 @@ services:
     image: mqms:latest
     ports:
       - "3000:3000"
+      - "51820:51820/udp"
     volumes:
       - db_data:/app/data
-      - /lib/modules:/lib/modules:ro
     environment:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}

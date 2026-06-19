@@ -49,27 +49,23 @@ ENV DATABASE_URL=file:./data/data.db
 # Install wireguard-tools for VPN feature
 RUN apk add --no-cache wireguard-tools
 
-RUN addgroup --system --gid 1001 mqms
-RUN adduser --system --uid 1001 mqms
-
-COPY --from=builder --chown=mqms:mqms /app/public ./public
-COPY --from=builder --chown=mqms:mqms /app/.next/standalone ./
-COPY --from=builder --chown=mqms:mqms /app/.next/static ./.next/static
-COPY --from=builder --chown=mqms:mqms /app/prisma ./prisma
-COPY --from=builder --chown=mqms:mqms /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # Minimal Prisma
-COPY --from=prisma --chown=mqms:mqms /app/node_modules ./node_modules
+COPY --from=prisma /app/node_modules ./node_modules
 
 # Bundled scripts
-COPY --from=builder --chown=mqms:mqms /app/worker.js ./worker.js
-COPY --from=builder --chown=mqms:mqms /app/seed.js ./seed.js
+COPY --from=builder /app/worker.js ./worker.js
+COPY --from=builder /app/seed.js ./seed.js
 
-RUN mkdir /app/data && chown -R mqms:mqms /app/data
-
-USER mqms
+RUN mkdir -p /app/data /etc/wireguard
 
 EXPOSE 3000
+EXPOSE 51820/udp
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
