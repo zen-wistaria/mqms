@@ -9,9 +9,22 @@ export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
 		provider: "sqlite",
 	}),
-	plugins: [
-		username(),
-	],
+	databaseHooks: {
+		user: {
+			create: {
+				after: async (user) => {
+					const count = await prisma.user.count();
+					if (count === 1) {
+						await prisma.user.update({
+							where: { id: user.id },
+							data: { role: "admin" },
+						});
+					}
+				},
+			},
+		},
+	},
+	plugins: [username()],
 	emailAndPassword: {
 		enabled: true,
 		password: {
