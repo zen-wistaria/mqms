@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 // PATCH /api/users/[id]/role — change user role (admin only)
 export async function PATCH(

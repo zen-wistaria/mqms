@@ -165,7 +165,10 @@ export async function POST(request: NextRequest) {
 			} else {
 				failures++;
 				errors.push(result.error || "Unknown error");
-				console.error(`[generate] Failed to create user ${u.name}:`, result.error);
+				console.error(
+					`[generate] Failed to create user ${u.name}:`,
+					result.error,
+				);
 			}
 		}
 

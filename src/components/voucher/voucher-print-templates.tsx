@@ -80,7 +80,10 @@ export function PrintTemplate1({ data }: { data: VoucherPrintData }) {
 						<div className="t1-title">{data.title}</div>
 						<div className="t1-divider" />
 						{data.showQR && (
-							<QRPlaceholder text={qrUrl(data.qrDomain, u.name, u.password || "")} size={70} />
+							<QRPlaceholder
+								text={qrUrl(data.qrDomain, u.name, u.password || "")}
+								size={70}
+							/>
 						)}
 						<div className="t1-user">{u.name}</div>
 						{data.showPassword && u.password && (
@@ -88,8 +91,12 @@ export function PrintTemplate1({ data }: { data: VoucherPrintData }) {
 						)}
 						<div className="t1-meta">
 							{u.profile && <span>{u.profile}</span>}
-							{formatUptime(u["limit-uptime"]) && <span>{formatUptime(u["limit-uptime"])}</span>}
-							{formatDataLimit(u["limit-bytes-total"]) && <span>{formatDataLimit(u["limit-bytes-total"])}</span>}
+							{formatUptime(u["limit-uptime"]) && (
+								<span>{formatUptime(u["limit-uptime"])}</span>
+							)}
+							{formatDataLimit(u["limit-bytes-total"]) && (
+								<span>{formatDataLimit(u["limit-bytes-total"])}</span>
+							)}
 						</div>
 					</div>
 				))}
@@ -119,7 +126,10 @@ export function PrintTemplate2({ data }: { data: VoucherPrintData }) {
 					<div key={u[".id"]} className="t2-card">
 						<div className="t2-title">{data.title}</div>
 						{data.showQR && (
-							<QRPlaceholder text={qrUrl(data.qrDomain, u.name, u.password || "")} size={65} />
+							<QRPlaceholder
+								text={qrUrl(data.qrDomain, u.name, u.password || "")}
+								size={65}
+							/>
 						)}
 						<div className="t2-user">{u.name}</div>
 						{data.showPassword && u.password && (
@@ -127,10 +137,20 @@ export function PrintTemplate2({ data }: { data: VoucherPrintData }) {
 						)}
 						<div>
 							{u.profile && <span className="t2-badge">{u.profile}</span>}
-							{formatUptime(u["limit-uptime"]) && <span className="t2-badge">{formatUptime(u["limit-uptime"])}</span>}
-							{formatDataLimit(u["limit-bytes-total"]) && <span className="t2-badge">{formatDataLimit(u["limit-bytes-total"])}</span>}
+							{formatUptime(u["limit-uptime"]) && (
+								<span className="t2-badge">
+									{formatUptime(u["limit-uptime"])}
+								</span>
+							)}
+							{formatDataLimit(u["limit-bytes-total"]) && (
+								<span className="t2-badge">
+									{formatDataLimit(u["limit-bytes-total"])}
+								</span>
+							)}
 						</div>
-						<div className="t2-footer">{data.subtitle || "Hotspot Voucher"}</div>
+						<div className="t2-footer">
+							{data.subtitle || "Hotspot Voucher"}
+						</div>
 					</div>
 				))}
 			</div>
@@ -159,7 +179,11 @@ export function PrintTemplate3({ data }: { data: VoucherPrintData }) {
 					<div key={u[".id"]} className="t3-card">
 						<div className="t3-title">{data.title}</div>
 						{data.showQR && (
-							<QRPlaceholder text={qrUrl(data.qrDomain, u.name, u.password || "")} size={65} invert />
+							<QRPlaceholder
+								text={qrUrl(data.qrDomain, u.name, u.password || "")}
+								size={65}
+								invert
+							/>
 						)}
 						<div className="t3-user">{u.name}</div>
 						{data.showPassword && u.password && (
@@ -167,8 +191,12 @@ export function PrintTemplate3({ data }: { data: VoucherPrintData }) {
 						)}
 						<div className="t3-meta">
 							{u.profile && <span>{u.profile}</span>}
-							{formatUptime(u["limit-uptime"]) && <span>{formatUptime(u["limit-uptime"])}</span>}
-							{formatDataLimit(u["limit-bytes-total"]) && <span>{formatDataLimit(u["limit-bytes-total"])}</span>}
+							{formatUptime(u["limit-uptime"]) && (
+								<span>{formatUptime(u["limit-uptime"])}</span>
+							)}
+							{formatDataLimit(u["limit-bytes-total"]) && (
+								<span>{formatDataLimit(u["limit-bytes-total"])}</span>
+							)}
 						</div>
 					</div>
 				))}
@@ -198,7 +226,10 @@ export function PrintTemplate4({ data }: { data: VoucherPrintData }) {
 				{data.users.map((u) => (
 					<div key={u[".id"]} className="t4-card">
 						{data.showQR && (
-							<QRPlaceholder text={qrUrl(data.qrDomain, u.name, u.password || "")} size={50} />
+							<QRPlaceholder
+								text={qrUrl(data.qrDomain, u.name, u.password || "")}
+								size={50}
+							/>
 						)}
 						<div className="t4-body">
 							<div className="t4-title">{data.title}</div>
@@ -208,8 +239,12 @@ export function PrintTemplate4({ data }: { data: VoucherPrintData }) {
 							)}
 							<div className="t4-meta">
 								{u.profile && <span>{u.profile}</span>}
-								{formatUptime(u["limit-uptime"]) && <span>Masa: {formatUptime(u["limit-uptime"])}</span>}
-								{formatDataLimit(u["limit-bytes-total"]) && <span>Kuota: {formatDataLimit(u["limit-bytes-total"])}</span>}
+								{formatUptime(u["limit-uptime"]) && (
+									<span>Masa: {formatUptime(u["limit-uptime"])}</span>
+								)}
+								{formatDataLimit(u["limit-bytes-total"]) && (
+									<span>Kuota: {formatDataLimit(u["limit-bytes-total"])}</span>
+								)}
 							</div>
 						</div>
 					</div>
@@ -243,7 +278,9 @@ export function PrintTemplate5({ data }: { data: VoucherPrintData }) {
 				{data.users.map((u) => (
 					<div key={u[".id"]} className="t5-card">
 						<div className="t5-title">{data.title}</div>
-						<div className="t5-subtitle">{data.subtitle || "Hotspot Access"}</div>
+						<div className="t5-subtitle">
+							{data.subtitle || "Hotspot Access"}
+						</div>
 						{data.showQR && (
 							<QRPlaceholder
 								text={qrUrl(data.qrDomain, u.name, u.password || "")}
@@ -257,8 +294,12 @@ export function PrintTemplate5({ data }: { data: VoucherPrintData }) {
 						)}
 						<div className="t5-meta">
 							{u.profile && <span>{u.profile}</span>}
-							{formatUptime(u["limit-uptime"]) && <span>{formatUptime(u["limit-uptime"])}</span>}
-							{formatDataLimit(u["limit-bytes-total"]) && <span>{formatDataLimit(u["limit-bytes-total"])}</span>}
+							{formatUptime(u["limit-uptime"]) && (
+								<span>{formatUptime(u["limit-uptime"])}</span>
+							)}
+							{formatDataLimit(u["limit-bytes-total"]) && (
+								<span>{formatDataLimit(u["limit-bytes-total"])}</span>
+							)}
 						</div>
 						<div className="t5-footer">{data.footer || "Terima kasih"}</div>
 					</div>
@@ -275,7 +316,11 @@ function QRPlaceholder({
 	text,
 	size = 65,
 	invert = false,
-}: { text: string; size?: number; invert?: boolean }) {
+}: {
+	text: string;
+	size?: number;
+	invert?: boolean;
+}) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	useEffect(() => {

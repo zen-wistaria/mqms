@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import {
 	generateKeypair,
 	generatePresharedKey,
 	generateServerConfig,
-	writeConfig,
 	getNextIp,
 	isWireguardRunning,
+	writeConfig,
 } from "@/lib/wireguard";
 
 // GET /api/vpn/peers — list all peers
@@ -43,10 +43,7 @@ export async function POST(request: NextRequest) {
 		const { name, comment } = await request.json();
 
 		if (!name?.trim()) {
-			return NextResponse.json(
-				{ error: "Name is required" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "Name is required" }, { status: 400 });
 		}
 
 		// Get server config

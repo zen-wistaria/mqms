@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getAccessibleRouterIdsOrThrow } from "@/lib/permissions";
 import { serializeBigInt } from "@/lib/format";
+import { getAccessibleRouterIdsOrThrow } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/queues — List all queues (filtered by accessible routers)

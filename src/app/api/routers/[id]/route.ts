@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { encrypt } from "@/lib/encryption";
 import { serializeBigInt } from "@/lib/format";
+import { requireRole, requireRouterAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { requireRouterAccess, requireRole } from "@/lib/permissions";
 import { routerUpdateSchema } from "@/lib/validations/router";
 
 interface RouteParams {
@@ -33,10 +33,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 		});
 
 		if (!router) {
-			return NextResponse.json(
-				{ error: "Router not found" },
-				{ status: 404 },
-			);
+			return NextResponse.json({ error: "Router not found" }, { status: 404 });
 		}
 
 		const { password: _, ...safeRouter } = router;
@@ -91,10 +88,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/routers/:id — Delete router (admin only)
-export async function DELETE(
-	_request: NextRequest,
-	{ params }: RouteParams,
-) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 	try {
 		await requireRole("admin");
 		const { id } = await params;

@@ -1,6 +1,6 @@
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
 
 export type Role = "admin" | "user";
 
@@ -39,9 +39,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
  * Require the current user to have one of the given roles.
  * Throws a Response (can be thrown in API routes).
  */
-export async function requireRole(
-	roles: Role | Role[],
-): Promise<SessionUser> {
+export async function requireRole(roles: Role | Role[]): Promise<SessionUser> {
 	const user = await getCurrentUser();
 	if (!user) {
 		throw new Response(JSON.stringify({ error: "Unauthorized" }), {

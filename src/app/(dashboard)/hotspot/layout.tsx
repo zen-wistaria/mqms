@@ -70,7 +70,8 @@ export default function HotspotLayout({
 					<Select value={selectedRouter} onValueChange={handleRouterChange}>
 						<SelectTrigger className="w-[200px]">
 							<SelectValue placeholder="Select Router">
-								{routers.find((r) => r.id === selectedRouter)?.name || "Select Router"}
+								{routers.find((r) => r.id === selectedRouter)?.name ||
+									"Select Router"}
 							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>

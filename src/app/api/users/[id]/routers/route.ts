@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 // GET /api/users/[id]/routers — list routers assigned to a user
 export async function GET(
@@ -57,10 +57,7 @@ export async function POST(
 			where: { id: routerId },
 		});
 		if (!router) {
-			return NextResponse.json(
-				{ error: "Router not found" },
-				{ status: 404 },
-			);
+			return NextResponse.json({ error: "Router not found" }, { status: 404 });
 		}
 
 		// Check duplicate
@@ -68,10 +65,7 @@ export async function POST(
 			where: { userId_routerId: { userId: id, routerId } },
 		});
 		if (existing) {
-			return NextResponse.json(
-				{ error: "Already assigned" },
-				{ status: 409 },
-			);
+			return NextResponse.json({ error: "Already assigned" }, { status: 409 });
 		}
 
 		const assignment = await prisma.routerAssignment.create({

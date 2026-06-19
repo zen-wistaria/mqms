@@ -8,12 +8,12 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import {
-	type VoucherPrintData,
 	PrintTemplate1,
 	PrintTemplate2,
 	PrintTemplate3,
 	PrintTemplate4,
 	PrintTemplate5,
+	type VoucherPrintData,
 } from "./voucher-print-templates";
 
 type TemplateKey = "t1" | "t2" | "t3" | "t4" | "t5" | "custom";
@@ -76,7 +76,10 @@ export function VoucherPrintDialog({
 		await Promise.all(
 			Array.from(canvases).map(async (canvas, idx) => {
 				// Try to find matching original canvas that already has QR rendered
-				const origCanvas = previewRef.current?.querySelectorAll<HTMLCanvasElement>("canvas")[idx];
+				const origCanvas =
+					previewRef.current?.querySelectorAll<HTMLCanvasElement>("canvas")[
+						idx
+					];
 				if (origCanvas) {
 					try {
 						const dataUrl = origCanvas.toDataURL();
@@ -93,10 +96,14 @@ export function VoucherPrintDialog({
 							const text = canvas.dataset.qrText || "";
 							const size = Number(canvas.dataset.qrSize) || canvas.width || 80;
 							const dataUrl = await new Promise<string>((resolve, reject) => {
-								QR.toDataURL(text, { width: size, margin: 1 }, (err: Error | null | undefined, url: string) => {
-									if (err) reject(err);
-									else resolve(url);
-								});
+								QR.toDataURL(
+									text,
+									{ width: size, margin: 1 },
+									(err: Error | null | undefined, url: string) => {
+										if (err) reject(err);
+										else resolve(url);
+									},
+								);
 							});
 							const img = document.createElement("img");
 							img.src = dataUrl;
@@ -104,7 +111,9 @@ export function VoucherPrintDialog({
 							img.height = canvas.height;
 							img.style.cssText = canvas.style.cssText;
 							canvas.parentNode?.replaceChild(img, canvas);
-						} catch { /* skip */ }
+						} catch {
+							/* skip */
+						}
 					}
 				}
 			}),
@@ -138,7 +147,7 @@ export function VoucherPrintDialog({
 							setTimeout(function() { window.close(); }, 500);
 						}, 300);
 					};
-				<\/script>
+				</script>
 			</body>
 			</html>
 		`);
@@ -156,10 +165,18 @@ export function VoucherPrintDialog({
 				let html = customHtml
 					.replace(/\{TITLE\}/g, data.title)
 					.replace(/\{USERNAME\}/g, u.name)
-					.replace(/\{PASSWORD\}/g, data.showPassword && u.password ? u.password : "***")
+					.replace(
+						/\{PASSWORD\}/g,
+						data.showPassword && u.password ? u.password : "***",
+					)
 					.replace(/\{PROFILE\}/g, u.profile || "")
 					.replace(/\{TIME_LIMIT\}/g, u["limit-uptime"] || "")
-					.replace(/\{DATA_LIMIT\}/g, u["limit-bytes-total"] ? formatBytesCustom(Number(u["limit-bytes-total"])) : "")
+					.replace(
+						/\{DATA_LIMIT\}/g,
+						u["limit-bytes-total"]
+							? formatBytesCustom(Number(u["limit-bytes-total"]))
+							: "",
+					)
 					.replace(/\{QR_TEXT\}/g, qrText);
 
 				if (!data.showQR) {
@@ -244,10 +261,7 @@ export function VoucherPrintDialog({
 								onChange={(e) => setShowPassword(e.target.checked)}
 								className="h-4 w-4"
 							/>
-							<Label
-								htmlFor="showPassword"
-								className="cursor-pointer text-sm"
-							>
+							<Label htmlFor="showPassword" className="cursor-pointer text-sm">
 								Tampilkan Password
 							</Label>
 						</div>
@@ -291,7 +305,10 @@ export function VoucherPrintDialog({
 								placeholder="Gunakan {USERNAME}, {PASSWORD}, {QR_TEXT}, {TITLE}, {PROFILE}, {TIME_LIMIT}, {DATA_LIMIT}"
 							/>
 							<div className="text-xs text-muted-foreground">
-								Variabel: <code>{'{USERNAME}'}</code>, <code>{'{PASSWORD}'}</code>, <code>{'{QR_TEXT}'}</code>, <code>{'{TITLE}'}</code>, <code>{'{PROFILE}'}</code>, <code>{'{TIME_LIMIT}'}</code>, <code>{'{DATA_LIMIT}'}</code>
+								Variabel: <code>{"{USERNAME}"}</code>,{" "}
+								<code>{"{PASSWORD}"}</code>, <code>{"{QR_TEXT}"}</code>,{" "}
+								<code>{"{TITLE}"}</code>, <code>{"{PROFILE}"}</code>,{" "}
+								<code>{"{TIME_LIMIT}"}</code>, <code>{"{DATA_LIMIT}"}</code>
 							</div>
 						</div>
 					)}
@@ -318,9 +335,7 @@ export function VoucherPrintDialog({
 								{template === "t4" && <PrintTemplate4 data={printData} />}
 								{template === "t5" && <PrintTemplate5 data={printData} />}
 								{isCustom && (
-									<div
-										dangerouslySetInnerHTML={{ __html: renderCustom() }}
-									/>
+									<div dangerouslySetInnerHTML={{ __html: renderCustom() }} />
 								)}
 							</div>
 						</div>

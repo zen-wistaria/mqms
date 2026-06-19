@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import { generatePeerConfig } from "@/lib/wireguard";
 
 // GET /api/vpn/peers/[id]/config?endpoint=<host> — download peer config

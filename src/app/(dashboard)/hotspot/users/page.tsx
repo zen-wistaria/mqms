@@ -30,6 +30,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -37,8 +39,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Table,
 	TableBody,
@@ -47,9 +47,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { formatBytes } from "@/lib/format";
 import { VoucherPrintDialog } from "@/components/voucher/voucher-print-dialog";
 import type { VoucherPrintData } from "@/components/voucher/voucher-print-templates";
+import { formatBytes } from "@/lib/format";
 
 export default function HotspotUsersPage() {
 	const queryClient = useQueryClient();
@@ -156,13 +156,7 @@ export default function HotspotUsersPage() {
 	});
 
 	const batchActionMutation = useMutation({
-		mutationFn: async ({
-			ids,
-			action,
-		}: {
-			ids: string[];
-			action: string;
-		}) => {
+		mutationFn: async ({ ids, action }: { ids: string[]; action: string }) => {
 			const results = await Promise.allSettled(
 				ids.map((id) =>
 					fetch(
@@ -275,7 +269,9 @@ export default function HotspotUsersPage() {
 				.filter((u: any) => u.comment && u.comment.match(/^(up|vc)-\d{3}/))
 				.map((u: any) => u.comment),
 		),
-	).sort().reverse() as string[];
+	)
+		.sort()
+		.reverse() as string[];
 
 	const filteredUsers = (users as any[]).filter((u) => {
 		if (batchFilter && u.comment !== batchFilter) return false;
@@ -333,9 +329,7 @@ export default function HotspotUsersPage() {
 	};
 
 	if (!routerId) {
-		return (
-			<div className="p-4 text-muted-foreground">Pilih router dulu.</div>
-		);
+		return <div className="p-4 text-muted-foreground">Pilih router dulu.</div>;
 	}
 
 	return (
@@ -423,9 +417,7 @@ export default function HotspotUsersPage() {
 								<Button
 									variant="destructive"
 									size="sm"
-									onClick={() =>
-										setConfirm({ type: "deleteSelected" })
-									}
+									onClick={() => setConfirm({ type: "deleteSelected" })}
 								>
 									<Trash2 className="mr-1 h-4 w-4" />
 									Hapus ({selected.size})
@@ -438,11 +430,7 @@ export default function HotspotUsersPage() {
 									<Printer className="mr-1 h-4 w-4" />
 									Print ({selected.size})
 								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={clearSelection}
-								>
+								<Button variant="ghost" size="sm" onClick={clearSelection}>
 									<X className="mr-1 h-4 w-4" />
 									Batal
 								</Button>
@@ -558,9 +546,7 @@ export default function HotspotUsersPage() {
 											if (selected.size === filteredUsers.length) {
 												clearSelection();
 											} else {
-												selectAll(
-													filteredUsers.map((u: any) => u[".id"]),
-												);
+												selectAll(filteredUsers.map((u: any) => u[".id"]));
 											}
 										}}
 									/>
@@ -606,9 +592,7 @@ export default function HotspotUsersPage() {
 													onChange={() => toggle(user[".id"])}
 												/>
 											</TableCell>
-											<TableCell className="font-medium">
-												{user.name}
-											</TableCell>
+											<TableCell className="font-medium">{user.name}</TableCell>
 											<TableCell>
 												<Badge variant="outline">
 													{user.profile || "default"}
@@ -641,10 +625,7 @@ export default function HotspotUsersPage() {
 															<MoreHorizontal className="h-4 w-4" />
 														</Button>
 													</DropdownMenuTrigger>
-													<DropdownMenuContent
-														align="end"
-														className="w-48"
-													>
+													<DropdownMenuContent align="end" className="w-48">
 														{user.disabled === "true" ? (
 															<DropdownMenuItem
 																onClick={() =>
@@ -723,8 +704,7 @@ export default function HotspotUsersPage() {
 				{!isLoading && (
 					<div className="text-xs text-muted-foreground">
 						Total: {(users as any[]).length} user
-						{selected.size > 0 &&
-							` | ${selected.size} dipilih`}
+						{selected.size > 0 && ` | ${selected.size} dipilih`}
 					</div>
 				)}
 			</div>
@@ -765,9 +745,7 @@ export default function HotspotUsersPage() {
 				<ConfirmModal
 					open
 					onClose={() => setConfirm(null)}
-					onConfirm={() =>
-						deleteSelectedMutation.mutate(Array.from(selected))
-					}
+					onConfirm={() => deleteSelectedMutation.mutate(Array.from(selected))}
 					title="Hapus User Terpilih"
 					message={`Yakin ingin menghapus ${selected.size} user terpilih?`}
 					confirmLabel={`Hapus ${selected.size} User`}

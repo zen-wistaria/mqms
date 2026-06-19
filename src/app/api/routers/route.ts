@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { encrypt } from "@/lib/encryption";
 import { serializeBigInt } from "@/lib/format";
-import { prisma } from "@/lib/prisma";
 import { getAccessibleRouterIdsOrThrow, requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import { routerCreateSchema } from "@/lib/validations/router";
 
 // GET /api/routers — List all accessible routers
@@ -11,8 +11,7 @@ export async function GET() {
 		const { user, routerIds } = await getAccessibleRouterIdsOrThrow();
 
 		// Admin gets all routers, user gets only assigned ones
-		const where =
-			user.role === "admin" ? {} : { id: { in: routerIds } };
+		const where = user.role === "admin" ? {} : { id: { in: routerIds } };
 
 		const routers = await prisma.router.findMany({
 			where,

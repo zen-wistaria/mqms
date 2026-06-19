@@ -323,17 +323,20 @@ export default function VpnPage() {
 					<p className="text-muted-foreground mb-4">
 						WireGuard belum diinisialisasi. Generate server keys untuk memulai.
 					</p>
-					<Button onClick={() => setShowInit(true)} disabled={initMutation.isPending}>
-						{initMutation.isPending ? "Initializing..." : "Initialize WireGuard"}
+					<Button
+						onClick={() => setShowInit(true)}
+						disabled={initMutation.isPending}
+					>
+						{initMutation.isPending
+							? "Initializing..."
+							: "Initialize WireGuard"}
 					</Button>
 				</div>
 			)}
 
 			{/* Peer Table */}
 			<div>
-				<h3 className="text-lg font-semibold mb-3">
-					Peers ({peers.length})
-				</h3>
+				<h3 className="text-lg font-semibold mb-3">Peers ({peers.length})</h3>
 				<div className="rounded-md border overflow-x-auto">
 					<Table>
 						<TableHeader>
@@ -351,7 +354,10 @@ export default function VpnPage() {
 						<TableBody>
 							{peers.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+									<TableCell
+										colSpan={8}
+										className="text-center py-8 text-muted-foreground"
+									>
 										Belum ada peer. Tambah peer untuk mulai.
 									</TableCell>
 								</TableRow>
@@ -359,10 +365,15 @@ export default function VpnPage() {
 								peers.map((peer) => (
 									<TableRow key={peer.id}>
 										<TableCell className="font-medium">{peer.name}</TableCell>
-										<TableCell className="font-mono text-xs">{peer.address}</TableCell>
+										<TableCell className="font-mono text-xs">
+											{peer.address}
+										</TableCell>
 										<TableCell>
 											{peer.enabled ? (
-												<Badge variant="outline" className="border-green-500/30 text-green-500">
+												<Badge
+													variant="outline"
+													className="border-green-500/30 text-green-500"
+												>
 													Active
 												</Badge>
 											) : (
@@ -438,7 +449,12 @@ export default function VpnPage() {
 			)}
 
 			{/* Add peer dialog */}
-			<Dialog open={addOpen} onOpenChange={(open) => { if (!open) setAddOpen(false); }}>
+			<Dialog
+				open={addOpen}
+				onOpenChange={(open) => {
+					if (!open) setAddOpen(false);
+				}}
+			>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Tambah Peer</DialogTitle>

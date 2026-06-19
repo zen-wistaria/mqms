@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 // DELETE /api/users/[id]/routers/[routerId] — remove router assignment
 export async function DELETE(

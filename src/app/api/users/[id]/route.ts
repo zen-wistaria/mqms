@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { hash } from "bcrypt-ts";
-import { prisma } from "@/lib/prisma";
+import { type NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 // PATCH /api/users/[id] — Update user (name, email, password)
 export async function PATCH(

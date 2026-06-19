@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import {
 	generateServerConfig,
-	writeConfig,
 	isWireguardRunning,
+	writeConfig,
 } from "@/lib/wireguard";
 
 // PATCH /api/vpn/peers/[id] — update peer

@@ -141,21 +141,21 @@ export default function DashboardLayout({
 								{navItems
 									.filter((item) => !item.adminOnly || isAdmin)
 									.map((item) => (
-									<SidebarMenuItem key={item.href}>
-										<SidebarMenuButton
-											render={<Link href={item.href} />}
-											isActive={
-												item.href === "/"
-													? pathname === "/"
-													: pathname.startsWith(item.href)
-											}
-											tooltip={item.title}
-										>
-											<item.icon className="size-4" />
-											<span>{item.title}</span>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
-								))}
+										<SidebarMenuItem key={item.href}>
+											<SidebarMenuButton
+												render={<Link href={item.href} />}
+												isActive={
+													item.href === "/"
+														? pathname === "/"
+														: pathname.startsWith(item.href)
+												}
+												tooltip={item.title}
+											>
+												<item.icon className="size-4" />
+												<span>{item.title}</span>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									))}
 							</SidebarMenu>
 						</SidebarGroupContent>
 					</SidebarGroup>

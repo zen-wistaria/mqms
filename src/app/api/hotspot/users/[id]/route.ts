@@ -103,7 +103,10 @@ export async function PATCH(
 				const userName = userData.name || "";
 
 				if (!userName) {
-					return NextResponse.json({ error: "User not found" }, { status: 404 });
+					return NextResponse.json(
+						{ error: "User not found" },
+						{ status: 404 },
+					);
 				}
 
 				// Find session that matches this user's name
@@ -125,7 +128,10 @@ export async function PATCH(
 				);
 
 				if (!kickResult.success) {
-					return NextResponse.json({ error: kickResult.error }, { status: 500 });
+					return NextResponse.json(
+						{ error: kickResult.error },
+						{ status: 500 },
+					);
 				}
 
 				return NextResponse.json({

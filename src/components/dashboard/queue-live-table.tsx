@@ -101,9 +101,7 @@ export function QueueLiveTable() {
 	const fetchQueues = useCallback(async () => {
 		if (!selectedRouter) return;
 		try {
-			const res = await fetch(
-				`/api/queues/live?routerId=${selectedRouter}`,
-			);
+			const res = await fetch(`/api/queues/live?routerId=${selectedRouter}`);
 			if (res.ok) {
 				setQueues(await res.json());
 			}
@@ -146,8 +144,7 @@ export function QueueLiveTable() {
 							Refresh setiap {Number(intervalMs) / 1000} detik
 							{selectedRouter && (
 								<span className="ml-1">
-									—{" "}
-									{routers.find((r) => r.id === selectedRouter)?.name || ""}
+									— {routers.find((r) => r.id === selectedRouter)?.name || ""}
 								</span>
 							)}
 						</CardDescription>
@@ -162,9 +159,7 @@ export function QueueLiveTable() {
 					<div className="min-w-[140px]">
 						<Select
 							value={selectedRouter}
-							onValueChange={(v) =>
-								setSelectedRouter(v ?? selectedRouter)
-							}
+							onValueChange={(v) => setSelectedRouter(v ?? selectedRouter)}
 						>
 							<SelectTrigger className="h-7 text-xs">
 								<SelectValue>
@@ -185,14 +180,12 @@ export function QueueLiveTable() {
 					<div className="min-w-[100px]">
 						<Select
 							value={intervalMs}
-							onValueChange={(v) =>
-								setIntervalMs(v ?? intervalMs)
-							}
+							onValueChange={(v) => setIntervalMs(v ?? intervalMs)}
 						>
 							<SelectTrigger className="h-7 text-xs">
 								<SelectValue>
-									{INTERVAL_OPTS.find((o) => o.value === intervalMs)
-										?.label || "1 detik"}
+									{INTERVAL_OPTS.find((o) => o.value === intervalMs)?.label ||
+										"1 detik"}
 								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>

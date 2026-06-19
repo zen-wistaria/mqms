@@ -161,9 +161,7 @@ export default function HotspotGeneratePage() {
 	};
 
 	if (!routerId)
-		return (
-			<div className="p-4 text-muted-foreground">Pilih router dulu.</div>
-		);
+		return <div className="p-4 text-muted-foreground">Pilih router dulu.</div>;
 
 	return (
 		<>
@@ -256,7 +254,9 @@ export default function HotspotGeneratePage() {
 										type="text"
 										maxLength={6}
 										value={form.prefix}
-										onChange={(e) => setForm({ ...form, prefix: e.target.value })}
+										onChange={(e) =>
+											setForm({ ...form, prefix: e.target.value })
+										}
 									/>
 								</div>
 								<div className="space-y-2">
@@ -406,10 +406,7 @@ export default function HotspotGeneratePage() {
 						</CardHeader>
 						<CardContent>
 							<div className="flex gap-2">
-								<Button
-									variant="outline"
-									onClick={() => setShowPrint(true)}
-								>
+								<Button variant="outline" onClick={() => setShowPrint(true)}>
 									<Printer className="mr-2 h-4 w-4" />
 									Print / Cetak Voucher
 								</Button>

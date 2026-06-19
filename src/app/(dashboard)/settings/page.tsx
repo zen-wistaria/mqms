@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -189,9 +189,7 @@ export default function SettingsPage() {
 								<p className="text-sm font-medium">Router</p>
 								<Select
 									value={selectedRouter}
-									onValueChange={(v) =>
-										setSelectedRouter(v ?? "all")
-									}
+									onValueChange={(v) => setSelectedRouter(v ?? "all")}
 								>
 									<SelectTrigger className="w-[200px]">
 										<SelectValue />

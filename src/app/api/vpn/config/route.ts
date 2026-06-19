@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import {
 	generateKeypair,
-	writeConfig,
 	generateServerConfig,
-	isWireguardRunning,
 	getWireguardStatus,
+	isWireguardRunning,
+	writeConfig,
 } from "@/lib/wireguard";
 
 // GET /api/vpn/config — get server config + status
@@ -36,12 +36,14 @@ export async function GET() {
 				dns: config.dns,
 				nextIp: config.nextIp,
 			},
-			peers: status?.peers ? Array.from(status.peers.entries()).map(([pubkey, data]) => ({
-				publicKey: pubkey,
-				transferRx: data.transferRx.toString(),
-				transferTx: data.transferTx.toString(),
-				latestHandshake: data.latestHandshake?.toISOString() || null,
-			})) : [],
+			peers: status?.peers
+				? Array.from(status.peers.entries()).map(([pubkey, data]) => ({
+						publicKey: pubkey,
+						transferRx: data.transferRx.toString(),
+						transferTx: data.transferTx.toString(),
+						latestHandshake: data.latestHandshake?.toISOString() || null,
+					}))
+				: [],
 		});
 	} catch (error: unknown) {
 		if (error instanceof Response) return error;

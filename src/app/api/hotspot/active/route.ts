@@ -25,7 +25,11 @@ export async function GET(request: NextRequest) {
 		await requireRouterAccess(routerId);
 		const config = await getRouterConfig(routerId);
 
-		const result = await executeRestCommand(config, "GET", "/ip/hotspot/active");
+		const result = await executeRestCommand(
+			config,
+			"GET",
+			"/ip/hotspot/active",
+		);
 
 		if (!result.success) {
 			return NextResponse.json({ error: result.error }, { status: 500 });
@@ -50,7 +54,10 @@ export async function DELETE(request: NextRequest) {
 		const id = searchParams.get("id");
 
 		if (!id) {
-			return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
+			return NextResponse.json(
+				{ error: "Session ID is required" },
+				{ status: 400 },
+			);
 		}
 		if (!routerId) throw new Error("Router ID is required");
 
@@ -58,7 +65,9 @@ export async function DELETE(request: NextRequest) {
 		const config = await getRouterConfig(routerId);
 
 		const result = await executeRestCommand(
-			config, "DELETE", `/ip/hotspot/active/${id}`,
+			config,
+			"DELETE",
+			`/ip/hotspot/active/${id}`,
 		);
 
 		if (!result.success) {

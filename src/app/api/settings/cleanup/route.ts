@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getAccessibleRouterIds, getCurrentUser } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 // POST /api/settings/cleanup — Delete old history records
 export async function POST(request: NextRequest) {
@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
 				return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 			}
 			if (!accessibleRouterIds.includes(routerId)) {
-				return NextResponse.json({ error: "Router not found" }, { status: 404 });
+				return NextResponse.json(
+					{ error: "Router not found" },
+					{ status: 404 },
+				);
 			}
 			targetRouterIds = [routerId];
 		} else {

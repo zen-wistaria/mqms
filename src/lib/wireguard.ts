@@ -56,9 +56,7 @@ export function generateServerConfig(
 	const enabledPeers = peers.filter((p) => p.enabled);
 	const peerSections = enabledPeers
 		.map((p) => {
-			const psk = p.presharedKey
-				? `\nPresharedKey = ${p.presharedKey}`
-				: "";
+			const psk = p.presharedKey ? `\nPresharedKey = ${p.presharedKey}` : "";
 			return `[Peer]
 # ${p.name}${p.comment ? ` — ${p.comment}` : ""}
 PublicKey = ${p.publicKey}${psk}
@@ -86,9 +84,7 @@ export function generatePeerConfig(
 	peer: WireguardPeerData,
 	endpointHost: string,
 ): string {
-	const psk = peer.presharedKey
-		? `\nPresharedKey = ${peer.presharedKey}`
-		: "";
+	const psk = peer.presharedKey ? `\nPresharedKey = ${peer.presharedKey}` : "";
 	return `[Interface]
 Address = ${peer.address}
 PrivateKey = ${peer.privateKey}
@@ -186,9 +182,7 @@ export function getWireguardStatus(): WireguardStatus {
 					transferRx,
 					transferTx,
 					latestHandshake:
-						latestHandshake > 0
-							? new Date(latestHandshake * 1000)
-							: null,
+						latestHandshake > 0 ? new Date(latestHandshake * 1000) : null,
 				});
 			}
 		}

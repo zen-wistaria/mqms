@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
 		const config = await getRouterConfig(routerId);
 
 		const result = await executeRestCommand(
-			config, "GET", "/ip/hotspot/user/profile",
+			config,
+			"GET",
+			"/ip/hotspot/user/profile",
 		);
 
 		if (!result.success) {
@@ -57,7 +59,10 @@ export async function POST(request: NextRequest) {
 		const body = await request.json();
 
 		const result = await executeRestCommand(
-			config, "PUT", "/ip/hotspot/user/profile", body,
+			config,
+			"PUT",
+			"/ip/hotspot/user/profile",
+			body,
 		);
 
 		if (!result.success) {

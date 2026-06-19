@@ -3,8 +3,8 @@ import { requireRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
 	generateServerConfig,
-	writeConfig,
 	startWireguard,
+	writeConfig,
 } from "@/lib/wireguard";
 
 // POST /api/vpn/config/start — start wireguard

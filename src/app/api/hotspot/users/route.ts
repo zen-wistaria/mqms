@@ -65,7 +65,12 @@ export async function POST(request: NextRequest) {
 
 		const body = await request.json();
 
-		const result = await executeRestCommand(config, "PUT", "/ip/hotspot/user", body);
+		const result = await executeRestCommand(
+			config,
+			"PUT",
+			"/ip/hotspot/user",
+			body,
+		);
 
 		if (!result.success) {
 			return NextResponse.json({ error: result.error }, { status: 500 });
@@ -90,7 +95,10 @@ export async function DELETE(request: NextRequest) {
 		const id = searchParams.get("id");
 
 		if (!id) {
-			return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+			return NextResponse.json(
+				{ error: "User ID is required" },
+				{ status: 400 },
+			);
 		}
 		if (!routerId) throw new Error("Router ID is required");
 
@@ -98,7 +106,9 @@ export async function DELETE(request: NextRequest) {
 		const config = await getRouterConfig(routerId);
 
 		const result = await executeRestCommand(
-			config, "DELETE", `/ip/hotspot/user/${id}`,
+			config,
+			"DELETE",
+			`/ip/hotspot/user/${id}`,
 		);
 
 		if (!result.success) {
