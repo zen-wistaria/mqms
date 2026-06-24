@@ -347,6 +347,8 @@ function QRPlaceholder({
 		>
 			<canvas
 				ref={canvasRef}
+				data-qr-text={text}
+				data-qr-size={size}
 				width={size}
 				height={size}
 				style={{ display: "block" }}
@@ -373,12 +375,12 @@ export function PrintTemplate6({ data }: { data: VoucherPrintData }) {
 			<style>{`
 				${SHARED_STYLES}
 				.vc-grid { font-family: 'Segoe UI', Arial, sans-serif; }
-				.vc-card { background: #0d1117; border-radius: 8px; padding: var(--vc-pad-card-v) var(--vc-pad-card-h); text-align: center; color: #c9d1d9; border: calc(var(--vc-border, 1px)) solid #30363d; }
-				.t6-title { font-size: inherit; font-weight: 800; color: #39d0c8; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 4px #39d0c8; margin-bottom: 0.2em; }
-				.t6-user { font-size: 1.2em; font-weight: 700; color: #ff79c6; letter-spacing: 1px; margin: 0.2em 0; text-shadow: 0 0 3px #ff79c6; }
-				.t6-pass { font-size: 0.85em; color: #8b949e; margin: 0.1em 0; }
-				.t6-meta { font-size: 0.65em; color: #8b949e; margin-top: 0.2em; }
-				.t6-meta span { display: inline-block; background: #161b22; border: 1px solid #30363d; border-radius: 3px; padding: 0.05em 0.5em; margin: 0.1em; color: #c9d1d9; }
+				.vc-card { background: #fff; border-radius: 8px; padding: var(--vc-pad-card-v) var(--vc-pad-card-h); text-align: center; color: #333; border: calc(var(--vc-border, 1px)) solid #d0d0d0; }
+				.t6-title { font-size: inherit; font-weight: 800; color: #009688; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.2em; }
+				.t6-user { font-size: 1.2em; font-weight: 700; color: #e91e63; letter-spacing: 1px; margin: 0.2em 0; }
+				.t6-pass { font-size: 0.85em; color: #666; margin: 0.1em 0; }
+				.t6-meta { font-size: 0.65em; color: #888; margin-top: 0.2em; }
+				.t6-meta span { display: inline-block; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 3px; padding: 0.05em 0.5em; margin: 0.1em; color: #333; }
 			`}</style>
 			<div className="vc-grid">
 				{data.users.map((u) => (
@@ -482,13 +484,13 @@ export function PrintTemplate9({ data }: { data: VoucherPrintData }) {
 			<style>{`
 				${SHARED_STYLES}
 				.vc-grid { font-family: 'Segoe UI', Arial, sans-serif; }
-				.vc-card { background: #120a2b; border-radius: 0; padding: var(--vc-pad-card-v) var(--vc-pad-card-h); text-align: center; color: #e0def4; border: calc(var(--vc-border, 2px)) solid; border-image: linear-gradient(135deg, #00f5d4, #7b2d8e) 1; }
-				.t9-title { font-size: inherit; font-weight: 800; color: #00f5d4; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.1em; }
+				.vc-card { background: #fff; border-radius: 0; padding: var(--vc-pad-card-v) var(--vc-pad-card-h); text-align: center; color: #333; border: calc(var(--vc-border, 2px)) solid; border-image: linear-gradient(135deg, #009688, #7b2d8e) 1; }
+				.t9-title { font-size: inherit; font-weight: 800; color: #009688; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.1em; }
 				.t9-sub { font-size: 0.6em; color: #7b2d8e; letter-spacing: 2px; margin-bottom: 0.3em; text-transform: uppercase; }
-				.t9-user { font-size: 1.3em; font-weight: 700; color: #ff6b9d; letter-spacing: 1.5px; margin: 0.2em 0; }
-				.t9-pass { font-size: 0.85em; color: #c0bae9; margin: 0.1em 0; }
-				.t9-meta { font-size: 0.65em; color: #937bd3; margin-top: 0.2em; }
-				.t9-meta span { display: inline-block; background: rgba(123,45,142,0.2); border: 1px solid #7b2d8e; padding: 0.05em 0.5em; margin: 0.1em; color: #00f5d4; }
+				.t9-user { font-size: 1.3em; font-weight: 700; color: #d81b60; letter-spacing: 1.5px; margin: 0.2em 0; }
+				.t9-pass { font-size: 0.85em; color: #666; margin: 0.1em 0; }
+				.t9-meta { font-size: 0.65em; color: #888; margin-top: 0.2em; }
+				.t9-meta span { display: inline-block; background: #f3e5f5; border: 1px solid #7b2d8e; padding: 0.05em 0.5em; margin: 0.1em; color: #7b2d8e; }
 			`}</style>
 			<div className="vc-grid">
 				{data.users.map((u) => (

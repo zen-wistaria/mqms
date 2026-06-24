@@ -20,8 +20,11 @@ export async function GET(request: NextRequest) {
 		const { searchParams } = new URL(request.url);
 		const routerId = searchParams.get("routerId");
 		const config = await getRouterConfig(routerId);
-
-		const result = await executeRestCommand(config, "GET", "/ip/hotspot");
+		const result = await executeRestCommand(
+			config,
+			"GET",
+			"/ip/hotspot/profile",
+		);
 		if (!result.success) {
 			return NextResponse.json({ error: result.error }, { status: 500 });
 		}
