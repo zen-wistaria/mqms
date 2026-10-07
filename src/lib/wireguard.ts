@@ -1,3 +1,4 @@
+import fs from "fs";
 import { execSync } from "child_process";
 import { prisma } from "./prisma";
 
@@ -69,7 +70,6 @@ Address = ${config.address}
 PrivateKey = ${config.privateKey}
 ListenPort = ${config.port}
 MTU = ${config.mtu}
-DNS = ${config.dns}
 # Enable IP forwarding is handled by docker-compose sysctl
 
 ${peerSections}
@@ -100,15 +100,25 @@ PersistentKeepalive = ${peer.persistentKeepalive}
 }
 
 /**
- * Write wg0.conf to /etc/wireguard/wg0.conf.
+ * Write wg0.conf to /etc/wireguard/wg0.conf and persistent storage.
  */
 export function writeConfig(content: string): void {
-	const fs = require("fs");
 	const dir = "/etc/wireguard";
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true });
 	}
 	fs.writeFileSync(`${dir}/wg0.conf`, content, "utf-8");
+
+	// Backup to persistent /app/data/wireguard so config survives container restarts
+	try {
+		const persistentDir = "/app/data/wireguard";
+		if (fs.existsSync("/app/data")) {
+			if (!fs.existsSync(persistentDir)) {
+				fs.mkdirSync(persistentDir, { recursive: true });
+			}
+			fs.writeFileSync(`${persistentDir}/wg0.conf`, content, "utf-8");
+		}
+	} catch {}
 }
 
 /**
@@ -116,10 +126,32 @@ export function writeConfig(content: string): void {
  */
 export function startWireguard(): { success: boolean; message: string } {
 	try {
-		execSync("wg-quick up wg0", { stdio: "pipe" });
+		// Clean up any stale/lingering wg0 state before starting
+		try {
+			execSync("wg-quick down wg0", {
+				stdio: "ignore",
+				shell: "/bin/sh",
+			});
+		} catch {}
+		try {
+			execSync("ip link delete wg0", {
+				stdio: "ignore",
+				shell: "/bin/sh",
+			});
+		} catch {}
+
+		execSync("wg-quick up wg0", {
+			encoding: "utf-8",
+			shell: "/bin/sh",
+			stdio: ["ignore", "pipe", "pipe"],
+		});
 		return { success: true, message: "WireGuard started" };
 	} catch (error: any) {
-		return { success: false, message: error.stderr || error.message };
+		const stderr = error.stderr ? error.stderr.toString().trim() : "";
+		const stdout = error.stdout ? error.stdout.toString().trim() : "";
+		const message = stderr || stdout || error.message || "Failed to start WireGuard";
+		console.error("[WireGuard] Failed to start:", message);
+		return { success: false, message };
 	}
 }
 
@@ -128,10 +160,40 @@ export function startWireguard(): { success: boolean; message: string } {
  */
 export function stopWireguard(): { success: boolean; message: string } {
 	try {
-		execSync("wg-quick down wg0", { stdio: "pipe" });
+		execSync("wg-quick down wg0", {
+			encoding: "utf-8",
+			shell: "/bin/sh",
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+		try {
+			if (fs.existsSync("/etc/wireguard/wg0.conf")) {
+				fs.unlinkSync("/etc/wireguard/wg0.conf");
+			}
+			if (fs.existsSync("/app/data/wireguard/wg0.conf")) {
+				fs.unlinkSync("/app/data/wireguard/wg0.conf");
+			}
+		} catch {}
 		return { success: true, message: "WireGuard stopped" };
 	} catch (error: any) {
-		return { success: false, message: error.stderr || error.message };
+		// Force delete link if wg-quick down encountered an issue
+		try {
+			execSync("ip link delete wg0", {
+				stdio: "ignore",
+				shell: "/bin/sh",
+			});
+			try {
+				if (fs.existsSync("/etc/wireguard/wg0.conf")) {
+					fs.unlinkSync("/etc/wireguard/wg0.conf");
+				}
+				if (fs.existsSync("/app/data/wireguard/wg0.conf")) {
+					fs.unlinkSync("/app/data/wireguard/wg0.conf");
+				}
+			} catch {}
+			return { success: true, message: "WireGuard stopped" };
+		} catch {}
+		const stderr = error.stderr ? error.stderr.toString().trim() : "";
+		const message = stderr || error.message || "Failed to stop WireGuard";
+		return { success: false, message };
 	}
 }
 
@@ -140,10 +202,34 @@ export function stopWireguard(): { success: boolean; message: string } {
  */
 export function isWireguardRunning(): boolean {
 	try {
-		const out = execSync("wg show wg0", { encoding: "utf-8" });
+		// Fast check on Linux: check /sys/class/net/wg0 directly without child process
+		if (fs.existsSync("/sys/class/net")) {
+			return fs.existsSync("/sys/class/net/wg0");
+		}
+		const out = execSync("wg show wg0", {
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+			shell: "/bin/sh",
+		});
 		return out.includes("interface: wg0");
 	} catch {
 		return false;
+	}
+}
+
+/**
+ * Dynamically synchronize live wireguard interface with current configuration.
+ */
+export function syncWireguardConfig(): void {
+	if (!isWireguardRunning()) return;
+	try {
+		// Portable across dash and bash: pipe stripped config into wg syncconf via stdin
+		execSync("wg-quick strip wg0 | wg syncconf wg0 /dev/stdin", {
+			stdio: "ignore",
+			shell: "/bin/sh",
+		});
+	} catch (error) {
+		console.warn("[WireGuard] Failed to sync live config:", error);
 	}
 }
 
@@ -161,8 +247,15 @@ export interface WireguardStatus {
 
 export function getWireguardStatus(): WireguardStatus {
 	const result: WireguardStatus = { running: false, peers: new Map() };
+	if (!isWireguardRunning()) {
+		return result;
+	}
 	try {
-		const out = execSync("wg show wg0 dump", { encoding: "utf-8" });
+		const out = execSync("wg show wg0 dump", {
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+			shell: "/bin/sh",
+		});
 		const lines = out.trim().split("\n");
 		if (lines.length === 0) return result;
 

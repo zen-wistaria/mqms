@@ -6,7 +6,7 @@ import {
 	generatePresharedKey,
 	generateServerConfig,
 	getNextIp,
-	isWireguardRunning,
+	syncWireguardConfig,
 	writeConfig,
 } from "@/lib/wireguard";
 
@@ -86,17 +86,8 @@ export async function POST(request: NextRequest) {
 		const cfgStr = generateServerConfig(config, allPeers);
 		writeConfig(cfgStr);
 
-		// If running, sync config
-		if (isWireguardRunning()) {
-			try {
-				const { execSync } = await import("child_process");
-				execSync("wg syncconf wg0 <(wg-quick strip wg0)", {
-					stdio: "pipe",
-				});
-			} catch {
-				// if syncconf fails, restart might be needed
-			}
-		}
+		// If running, dynamically sync config to live interface
+		syncWireguardConfig();
 
 		return NextResponse.json(
 			{

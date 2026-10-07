@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
 	generateServerConfig,
-	isWireguardRunning,
+	syncWireguardConfig,
 	writeConfig,
 } from "@/lib/wireguard";
 
@@ -40,16 +40,8 @@ export async function PATCH(
 			const cfgStr = generateServerConfig(config, allPeers);
 			writeConfig(cfgStr);
 
-			if (isWireguardRunning()) {
-				try {
-					const { execSync } = await import("child_process");
-					execSync("wg syncconf wg0 <(wg-quick strip wg0)", {
-						stdio: "pipe",
-					});
-				} catch {
-					// ignore
-				}
-			}
+			// Dynamically sync config if wireguard is active
+			syncWireguardConfig();
 		}
 
 		return NextResponse.json({ success: true });
@@ -85,16 +77,8 @@ export async function DELETE(
 			const cfgStr = generateServerConfig(config, allPeers);
 			writeConfig(cfgStr);
 
-			if (isWireguardRunning()) {
-				try {
-					const { execSync } = await import("child_process");
-					execSync("wg syncconf wg0 <(wg-quick strip wg0)", {
-						stdio: "pipe",
-					});
-				} catch {
-					// ignore
-				}
-			}
+			// Dynamically sync config if wireguard is active
+			syncWireguardConfig();
 		}
 
 		return NextResponse.json({ success: true });

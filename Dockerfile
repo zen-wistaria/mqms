@@ -45,15 +45,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PRISMA_CLIENT_ENGINE_TYPE=library
 ENV DATABASE_URL=file:./data/data.db
 
-# Install wireguard-tools, iptables, iproute2, procps, and sqlite3 for networking/VPN and DB management
+# Install wireguard-tools, wireguard-go, iptables, iproute2, procps, and sqlite3 for networking/VPN and DB management
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wireguard-tools \
+    wireguard-go \
     iptables \
     iproute2 \
     procps \
     sqlite3 \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && (update-alternatives --set iptables /usr/sbin/iptables-legacy 2>/dev/null || true) \
+    && (update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy 2>/dev/null || true)
 
 # Copy bun binary from builder so bun commands continue to work seamlessly
 COPY --from=builder /usr/local/bin/bun /usr/local/bin/bun

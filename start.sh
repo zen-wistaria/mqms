@@ -4,7 +4,14 @@ set -e
 echo "[start.sh] MQMS container initializing..."
 
 # Ensure required directories exist
-mkdir -p /app/data /etc/wireguard
+mkdir -p /app/data/wireguard /etc/wireguard
+
+# Ensure TUN device exists for WireGuard userspace fallback
+mkdir -p /dev/net
+if [ ! -c /dev/net/tun ]; then
+  mknod /dev/net/tun c 10 200 2>/dev/null || true
+  chmod 600 /dev/net/tun 2>/dev/null || true
+fi
 
 # Pre-enable WAL mode on SQLite if file exists
 if command -v sqlite3 >/dev/null 2>&1 && [ -f /app/data/data.db ]; then
@@ -22,6 +29,15 @@ fi
 # Ensure WAL mode is active on database
 if command -v sqlite3 >/dev/null 2>&1 && [ -f /app/data/data.db ]; then
   sqlite3 /app/data/data.db "PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 10000;" 2>/dev/null || true
+fi
+
+# Restore and auto-start WireGuard if configured
+if [ -f /app/data/wireguard/wg0.conf ] && [ ! -f /etc/wireguard/wg0.conf ]; then
+  cp -f /app/data/wireguard/wg0.conf /etc/wireguard/wg0.conf 2>/dev/null || true
+fi
+if [ -f /etc/wireguard/wg0.conf ]; then
+  echo "[start.sh] Restoring WireGuard interface..."
+  wg-quick up wg0 2>/dev/null || true
 fi
 
 # Supervisor loop to keep background worker alive
@@ -54,6 +70,7 @@ SERVER_PID=$!
 # Handle graceful shutdown (POSIX signal names without SIG prefix)
 shutdown() {
   echo "[start.sh] Received shutdown signal. Stopping services..."
+  wg-quick down wg0 2>/dev/null || true
   kill "$WORKER_PID" 2>/dev/null || true
   kill "$SERVER_PID" 2>/dev/null || true
   wait "$SERVER_PID" 2>/dev/null || true
