@@ -63,6 +63,15 @@ async function processQueueData(
 	routerId: string,
 	queueData: MikrotikQueueData[],
 ): Promise<void> {
+	if (queueData.length === 0) return;
+
+	// Pre-fetch all existing queues for this router to avoid N upsert queries
+	const existingQueues = await prisma.queue.findMany({
+		where: { routerId },
+	});
+	const queueMap = new Map(existingQueues.map((q) => [q.name, q]));
+
+	const now = new Date();
 	const historyRecords: Array<{
 		queueId: string;
 		routerId: string;
@@ -74,34 +83,55 @@ async function processQueueData(
 		packetRate: string | null;
 	}> = [];
 
+	const activeNames: string[] = [];
+
 	for (const q of queueData) {
-		// Upsert queue record
-		const queue = await prisma.queue.upsert({
-			where: {
-				routerId_name: {
+		activeNames.push(q.name);
+		let queueId: string;
+		const maxLimit = q["max-limit"] || "0/0";
+		const limitAt = q["limit-at"] || "0/0";
+		const parent = q.parent ?? "";
+
+		const existing = queueMap.get(q.name);
+		if (!existing) {
+			const created = await prisma.queue.create({
+				data: {
 					routerId,
 					name: q.name,
+					target: q.target,
+					maxLimit,
+					limitAt,
+					parent,
+					isDeleted: false,
+					lastSeenAt: now,
 				},
-			},
-			create: {
-				routerId,
-				name: q.name,
-				target: q.target,
-				maxLimit: q["max-limit"] || "0/0",
-				limitAt: q["limit-at"] || "0/0",
-				parent: q.parent ?? "",
-				isDeleted: false,
-				lastSeenAt: new Date(),
-			},
-			update: {
-				target: q.target,
-				maxLimit: q["max-limit"] || "0/0",
-				limitAt: q["limit-at"] || "0/0",
-				parent: q.parent ?? "",
-				isDeleted: false,
-				lastSeenAt: new Date(),
-			},
-		});
+			});
+			queueId = created.id;
+			queueMap.set(q.name, created);
+		} else {
+			queueId = existing.id;
+			// Only update queue definition if attributes changed
+			const hasChanged =
+				existing.target !== q.target ||
+				existing.maxLimit !== maxLimit ||
+				existing.limitAt !== limitAt ||
+				existing.parent !== parent ||
+				existing.isDeleted;
+
+			if (hasChanged) {
+				await prisma.queue.update({
+					where: { id: existing.id },
+					data: {
+						target: q.target,
+						maxLimit,
+						limitAt,
+						parent,
+						isDeleted: false,
+						lastSeenAt: now,
+					},
+				});
+			}
+		}
 
 		// Parse bytes and rate
 		const bytes = parseMikrotikBytes(q.bytes);
@@ -109,7 +139,7 @@ async function processQueueData(
 		const totalBytes = bytes.upload + bytes.download;
 
 		historyRecords.push({
-			queueId: queue.id,
+			queueId,
 			routerId,
 			uploadBytes: bytes.upload,
 			downloadBytes: bytes.download,
@@ -117,6 +147,20 @@ async function processQueueData(
 			rateUpload: rate.upload,
 			rateDownload: rate.download,
 			packetRate: q["packet-rate"] || null,
+		});
+	}
+
+	// Single batch update for lastSeenAt and active state
+	if (activeNames.length > 0) {
+		await prisma.queue.updateMany({
+			where: {
+				routerId,
+				name: { in: activeNames },
+			},
+			data: {
+				lastSeenAt: now,
+				isDeleted: false,
+			},
 		});
 	}
 

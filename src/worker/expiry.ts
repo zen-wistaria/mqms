@@ -60,7 +60,7 @@ async function processExpiredUsers(routerId: string): Promise<void> {
 		return;
 	}
 
-	const users = (result.data as any[]) || [];
+	const users = Array.isArray(result.data) ? (result.data as any[]) : [];
 
 	// Get local profile metadata to know expired mode
 	const localProfiles = await prisma.hotspotProfile.findMany({

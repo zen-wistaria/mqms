@@ -168,7 +168,9 @@ export async function fetchQueues(
 ): Promise<MikrotikQueueData[]> {
 	const client = createClient(config);
 	const response = await client.get("/queue/simple");
-	return response.data as MikrotikQueueData[];
+	return Array.isArray(response.data)
+		? (response.data as MikrotikQueueData[])
+		: [];
 }
 
 /**

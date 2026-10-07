@@ -33,19 +33,23 @@ export async function syncAllRouters(): Promise<void> {
 			});
 
 			// Mark queues as deleted if not found on router
-			let deletedCount = 0;
+			const toDeleteIds: string[] = [];
 			for (const dbQueue of dbQueues) {
 				if (!routerQueueNames.has(dbQueue.name)) {
-					await prisma.queue.update({
-						where: { id: dbQueue.id },
-						data: { isDeleted: true },
-					});
-					deletedCount++;
+					toDeleteIds.push(dbQueue.id);
 				}
 			}
 
+			let deletedCount = 0;
+			if (toDeleteIds.length > 0) {
+				const result = await prisma.queue.updateMany({
+					where: { id: { in: toDeleteIds } },
+					data: { isDeleted: true },
+				});
+				deletedCount = result.count;
+			}
+
 			// Restore queues that reappeared
-			let restoredCount = 0;
 			const deletedDbQueues = await prisma.queue.findMany({
 				where: {
 					routerId: router.id,
@@ -53,14 +57,20 @@ export async function syncAllRouters(): Promise<void> {
 				},
 			});
 
+			const toRestoreIds: string[] = [];
 			for (const deletedQueue of deletedDbQueues) {
 				if (routerQueueNames.has(deletedQueue.name)) {
-					await prisma.queue.update({
-						where: { id: deletedQueue.id },
-						data: { isDeleted: false, lastSeenAt: new Date() },
-					});
-					restoredCount++;
+					toRestoreIds.push(deletedQueue.id);
 				}
+			}
+
+			let restoredCount = 0;
+			if (toRestoreIds.length > 0) {
+				const result = await prisma.queue.updateMany({
+					where: { id: { in: toRestoreIds } },
+					data: { isDeleted: false, lastSeenAt: new Date() },
+				});
+				restoredCount = result.count;
 			}
 
 			if (deletedCount > 0 || restoredCount > 0) {
