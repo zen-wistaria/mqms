@@ -222,12 +222,12 @@ export default function VpnPage() {
 
 		return [
 			{
-				label: "IP Address",
-				cmd: `/ip address add address=${peer.address} disabled=no interface=mqms0 network=${serverIp}`,
-			},
-			{
 				label: "Interface",
 				cmd: `/interface wireguard add listen-port=${clientPort} mtu=${mtu} name=mqms0 private-key="${peer.privateKey}"`,
+			},
+			{
+				label: "IP Address",
+				cmd: `/ip address add address=${peer.address} disabled=no interface=mqms0 network=${serverIp}`,
 			},
 			{
 				label: "Peer",

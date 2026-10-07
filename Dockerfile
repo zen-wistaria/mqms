@@ -60,6 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy bun binary from builder so bun commands continue to work seamlessly
 COPY --from=builder /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Copy Next.js standalone output and public assets
 COPY --from=builder /app/public ./public
@@ -78,7 +79,7 @@ RUN ln -sf /app/node_modules/.bin/prisma /usr/local/bin/prisma
 
 # Bundled scripts
 COPY --from=builder /app/worker.js ./worker.js
-COPY --from=builder /app/seed.js ./seed.js
+COPY --from=builder /app/seed.js ./prisma/seed.ts
 
 RUN mkdir -p /app/data /etc/wireguard
 

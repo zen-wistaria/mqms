@@ -8,5 +8,6 @@ export default defineConfig({
 	},
 	migrations: {
 		path: path.join(__dirname, "prisma", "migrations"),
+		seed: `bun ${path.join(__dirname, "prisma", "seed.ts")}`,
 	},
 });

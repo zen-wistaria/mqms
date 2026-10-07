@@ -4,12 +4,13 @@ import prisma from "@/lib/prisma";
 async function main() {
 	console.log("Seeding database...");
 
-	// Check if user already exists
-	const existingUser = await prisma.user.findFirst();
-	if (existingUser) {
-		console.log("User already exists, skipping seed.");
-		return;
-	}
+	// existing user
+	const existingUser = await prisma.user.findUnique({
+		where: {
+			email: process.env.SEED_EMAIL || "admin@example.com"
+		
+		}
+	})
 
 	// Create user
 	const email = process.env.SEED_EMAIL || "admin@example.com";
@@ -18,10 +19,21 @@ async function main() {
 
 	const hashedPassword = await hash(passwordStr, 12);
 
-	const user = await prisma.user.create({
-		data: {
+	const user = await prisma.user.upsert({
+		where: {
+			email,
+		},
+		update: {
+			name,
+			role: "admin",
+			emailVerified: true,
+			username: "admin",
+		},
+		create: {
 			email,
 			name,
+			username: "admin",
+			role: "admin",
 			emailVerified: true,
 			accounts: {
 				create: {
@@ -33,9 +45,15 @@ async function main() {
 		},
 	});
 
-	console.log(
-		`Successfully seeded user: ${user.email} with password: ${passwordStr}`,
-	);
+	if (existingUser) {
+		console.log(
+			`User ${existingUser.email} already exists, admin role already set.`
+		);
+	} else {
+		console.log(
+			`Successfully seeded user: ${user.email} with password: ${passwordStr}.`
+		);
+	}
 }
 
 main()

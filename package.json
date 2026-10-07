@@ -13,7 +13,7 @@
 		"worker:bun": "bun worker.js",
 		"db:migrate": "prisma migrate deploy",
 		"db:studio": "prisma studio",
-		"db:seed": "node seed.js"
+		"db:seed": "prisma db seed"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.5.0",
