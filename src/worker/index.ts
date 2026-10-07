@@ -7,7 +7,7 @@ import { checkExpiredUsers } from "./expiry";
 const POLLING_INTERVAL = Number(process.env.POLLING_INTERVAL_MS || "60000");
 const SYNC_INTERVAL = Number(process.env.SYNC_INTERVAL_MS || "300000");
 const EXPIRY_INTERVAL = Number(process.env.EXPIRY_INTERVAL_MS || "300000"); // 5 min
-const RETENTION_DAYS = Number(process.env.HISTORY_RETENTION_DAYS || "7"); // 7 days retention
+const RETENTION_DAYS = Number(process.env.HISTORY_RETENTION_DAYS || "0"); // 0 = disabled (keep all data)
 const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 let isShuttingDown = false;
@@ -104,6 +104,7 @@ async function runExpiryCycle() {
 async function runCleanupCycle() {
 	if (isShuttingDown) return;
 	if (isCleaning) return;
+	if (RETENTION_DAYS <= 0) return;
 
 	isCleaning = true;
 	try {
@@ -124,7 +125,7 @@ async function runCleanupCycle() {
 		console.error("[Worker] Cleanup cycle error:", error);
 	} finally {
 		isCleaning = false;
-		if (!isShuttingDown) {
+		if (!isShuttingDown && RETENTION_DAYS > 0) {
 			cleanupTimer = setTimeout(runCleanupCycle, CLEANUP_INTERVAL);
 		}
 	}
@@ -152,7 +153,11 @@ async function main() {
 	console.log(`[Worker] Polling interval: ${POLLING_INTERVAL}ms`);
 	console.log(`[Worker] Sync interval: ${SYNC_INTERVAL}ms`);
 	console.log(`[Worker] Expiry check interval: ${EXPIRY_INTERVAL}ms`);
-	console.log(`[Worker] History retention: ${RETENTION_DAYS} days`);
+	if (RETENTION_DAYS > 0) {
+		console.log(`[Worker] History retention: ${RETENTION_DAYS} days`);
+	} else {
+		console.log(`[Worker] History retention: disabled (keeping all data indefinitely)`);
+	}
 
 	// Catch unhandled errors to avoid unhandled exits
 	process.on("unhandledRejection", (reason, promise) => {
@@ -175,8 +180,10 @@ async function main() {
 	syncTimer = setTimeout(runSyncCycle, 2000);
 	// Stagger initial expiry check by 4 seconds
 	expiryTimer = setTimeout(runExpiryCycle, 4000);
-	// Initial history cleanup after 15 seconds
-	cleanupTimer = setTimeout(runCleanupCycle, 15000);
+	// Initial history cleanup after 15 seconds (if enabled)
+	if (RETENTION_DAYS > 0) {
+		cleanupTimer = setTimeout(runCleanupCycle, 15000);
+	}
 
 	console.log("[Worker] Background worker is running. Press Ctrl+C to stop.");
 }
